@@ -1,4 +1,4 @@
-#################### FUNCTIONS - MASS SPECTROMETRY 2017.05.31 ##################
+#################### FUNCTIONS - MASS SPECTROMETRY 2017.06.01 ##################
 
 
 # Clear the console
@@ -59,7 +59,7 @@ check_internet_connection <- function(method = "getURL", website_to_ping = "www.
 
 ##################################################### INSTALL REQUIRED PACKAGES
 # This function installs and loads the selected packages
-install_and_load_required_packages <- function(required_packages, repository = "http://cran.mirror.garr.it/mirrors/CRAN/", update_packages = FALSE) {
+install_and_load_required_packages <- function(required_packages, repository = "http://cran.mirror.garr.it/mirrors/CRAN/", update_packages = FALSE, print_messages = FALSE) {
     ### Check internet connection
     there_is_internet <- check_internet_connection(method = "getURL", website_to_ping = "www.google.it")
     ########## Update all the packages (if there is internet connection)
@@ -71,9 +71,13 @@ install_and_load_required_packages <- function(required_packages, repository = "
             } else {
                 update.packages(ask = FALSE, checkBuilt = TRUE, quiet = TRUE, verbose = FALSE)
             }
-            print("Packages updated")
+            if (print_messages == TRUE) {
+                cat("Packages updated")
+            }
         } else {
-            print("Packages cannot be updated due to internet connection problems")
+            if (print_messages == TRUE) {
+                cat("Packages cannot be updated due to internet connection problems")
+            }
         }
     }
     ##### Retrieve the installed packages
@@ -91,25 +95,33 @@ install_and_load_required_packages <- function(required_packages, repository = "
                 ### If NO repository is specified
                 install.packages(missing_packages, quiet = TRUE, verbose = FALSE)
             }
-            print("All the required packages have been installed")
+            if (print_messages == TRUE) {
+                cat("All the required packages have been installed")
+            }
             all_needed_packages_are_installed <- TRUE
         } else {
             ### If there is NO internet...
-            print("Some packages cannot be installed due to internet connection problems")
+            if (print_messages == TRUE) {
+                cat("Some packages cannot be installed due to internet connection problems")
+            }
             all_needed_packages_are_installed <- FALSE
         }
     } else {
-        print("All the required packages are installed")
+        if (print_messages == TRUE) {
+            cat("All the required packages are installed")
+        }
         all_needed_packages_are_installed <- TRUE
     }
     ##### Load the packages (if there are all the packages)
     if ((length(missing_packages) > 0 && there_is_internet == TRUE) || length(missing_packages) == 0) {
         for (i in 1:length(required_packages)) {
-            library(required_packages[i], character.only = TRUE)
+            library(required_packages[i], character.only = TRUE, verbose = FALSE, quietly = TRUE, warn.conflicts = FALSE)
         }
         all_needed_packages_are_installed <- TRUE
     } else {
-        print("Packages cannot be installed/loaded... Expect issues...")
+        if (print_messages == TRUE) {
+            cat("Packages cannot be installed/loaded... Expect issues...")
+        }
         all_needed_packages_are_installed <- FALSE
     }
     .GlobalEnv$all_needed_packages_are_installed <- all_needed_packages_are_installed
@@ -1342,7 +1354,7 @@ resample_spectra <- function(spectra, final_data_points = lowest_data_points, bi
             # lowest number of original data points
             if (final_data_points > lowest_data_points) {
                 final_data_points <- lowest_data_points
-                print("Binning at this sample rate is not possible, the highest number of data points possible will be used")
+                cat("Binning at this sample rate is not possible, the highest number of data points possible will be used")
                 if (allow_parallelization == TRUE) {
                     # Load the required libraries
                     install_and_load_required_packages("parallel")
@@ -1389,8 +1401,8 @@ resample_spectra <- function(spectra, final_data_points = lowest_data_points, bi
                 }
             }
         }
-        print(table(sapply(spectra_binned, length)))
-        print(paste("Equal distance between datapoints", (all(sapply(spectra_binned, isRegular)))))
+        cat(table(sapply(spectra_binned, length)))
+        cat(paste("Equal distance between datapoints", (all(sapply(spectra_binned, isRegular)))))
     } else {
         # Retrieve the number of datapoints
         lowest_data_points <- length(spectra@mass)
@@ -2109,9 +2121,9 @@ preprocess_spectra <- function(spectra, tof_mode = "linear", preprocessing_param
             }, silent = TRUE)
             # Return message
             if (spectral_alignment_performed == TRUE) {
-                print("The spectral aligment has been performed successfully!")
+                cat("The spectral aligment has been performed successfully!")
             } else {
-                print("The spectral aligment could not be performed!")
+                cat("The spectral aligment could not be performed!")
             }
         }
     }
@@ -2919,7 +2931,7 @@ align_and_filter_peaks <- function(peaks, peak_picking_algorithm = "SuperSmoothe
 # It outputs NULL values if the classification cannot be performed due to incompatibilities between the model features and the spectral features.
 # The pixel grouping cannot be 'graph', otherwise, when embedded in the pixel by pixel classification function, the graph segmentation is performed for each model before making the predictons.
 single_model_classification_of_spectra <- function(spectra, model_x, model_name = "model", preprocessing_parameters = NULL, peak_picking_algorithm = "SuperSmoother", deisotope_peaklist = FALSE, peak_picking_SNR = 5, peak_filtering_frequency_threshold_percent = 5, low_intensity_peak_removal_threshold_percent = 1, low_intensity_peak_removal_threshold_method = "element-wise", tof_mode = "linear", allow_parallelization = FALSE, pixel_grouping = c("single", "hca", "moving window average", "graph"), number_of_hca_nodes = 5, moving_window_size = 5, final_result_matrix = NULL, seed = 12345, correlation_method_for_adjacency_matrix = "pearson", correlation_threshold_for_adjacency_matrix = 0.95, pvalue_threshold_for_adjacency_matrix = 0.05, max_GA_generations = 10, iterations_with_no_change = 5, number_of_spectra_partitions = 1, partitioning_method = "space", classification_mode_graph = c("average spectra", "single spectra clique"), plot_figures = TRUE, plot_graphs = TRUE, plot_legends = c("sample name", "legend", "plot name"), features_to_use_for_graph = c("all", "model")) {
-    print(paste("Computing predictions with model:", model_name))
+    cat(paste("Computing predictions with model:", model_name))
     # Class list (from the custom model entry)
     class_list <- model_x$class_list
     # Outcome list (from the custom model entry)
@@ -4138,7 +4150,7 @@ feature_selection <- function(training_set, feature_selection_method = "ANOVA", 
         highly_correlated_features <- names(training_set_features[,highly_correlated])
         # Features to keep
         low_correlation_features <- names(training_set_features[,-highly_correlated])
-        print(paste("The number of selected features is", length(low_correlation_features), "out of", length(training_set_features)))
+        cat(paste("The number of selected features is", length(low_correlation_features), "out of", length(training_set_features)))
         # Predictors
         predictors_feature_selection <- low_correlation_features
     }
@@ -4441,8 +4453,10 @@ embedded_rfe <- function(training_set, features_to_select = 20, selection_method
         ### Tuning will be performed afterwards with only the features selected by RFE
         # Extract a single value of tuning, otherwise the model will undergo tuning automatically in R
         single_parameter_tune_grid <- list()
-        for (l in 1:length(model_tune_grid)) {
-            single_parameter_tune_grid[[names(model_tune_grid)[l]]] <- model_tune_grid[[names(model_tune_grid)[l]]][1]
+        if (is.list(model_tune_grid) && length(model_tune_grid) > 0) {
+            for (l in 1:length(model_tune_grid)) {
+                single_parameter_tune_grid[[names(model_tune_grid)[l]]] <- model_tune_grid[[names(model_tune_grid)[l]]][1]
+            }
         }
         # Run the RFE
         rfe_model <- rfe(x = training_set[, !(names(training_set) %in% non_features)], y = training_set[,discriminant_attribute], sizes = subset_sizes, rfeControl = rfe_ctrl, method = selection_method, metric = selection_metric, preProcess = preprocessing, tuneGrid = expand.grid(single_parameter_tune_grid))
@@ -4690,8 +4704,8 @@ model_ensemble_embedded_fs <- function(training_set, features_to_select = 20, co
     pls_model_external_validation_confusion_matrix <- pls_model_rfe$external_validation_confusion_matrix
     pls_model_external_validation_confusion_matrix_df <- pls_model_rfe$external_validation_confusion_matrix_df
     pls_model_external_performance_parameter_list <- pls_model_rfe$model_external_performance_parameter_list
-    print("Partial Least Squares")
-    print(pls_model_performance)
+    cat("Partial Least Squares")
+    cat(pls_model_performance)
     # Progress bar
     if (!is.null(progress_bar) && progress_bar == "tcltk") {
         setTkProgressBar(fs_progress_bar, value = 0.10, title = NULL, label = "RBF Support Vector Machines")
@@ -4711,8 +4725,8 @@ model_ensemble_embedded_fs <- function(training_set, features_to_select = 20, co
     svmRadial_model_external_validation_confusion_matrix <- svmRadial_model_rfe$external_validation_confusion_matrix
     svmRadial_model_external_validation_confusion_matrix_df <- svmRadial_model_rfe$external_validation_confusion_matrix_df
     svmRadial_model_external_performance_parameter_list <- svmRadial_model_rfe$model_external_performance_parameter_list
-    print("Support Vector Machines (with Radial Basis Kernel function)")
-    print(svmRadial_model_performance)
+    cat("Support Vector Machines (with Radial Basis Kernel function)")
+    cat(svmRadial_model_performance)
     # Progress bar
     if (!is.null(progress_bar) && progress_bar == "tcltk") {
         setTkProgressBar(fs_progress_bar, value = 0.20, title = NULL, label = "Polynomial Support Vector Machines")
@@ -4732,8 +4746,8 @@ model_ensemble_embedded_fs <- function(training_set, features_to_select = 20, co
     svmPoly_model_external_validation_confusion_matrix <- svmPoly_model_rfe$external_validation_confusion_matrix
     svmPoly_model_external_validation_confusion_matrix_df <- svmPoly_model_rfe$external_validation_confusion_matrix_df
     svmPoly_model_external_performance_parameter_list <- svmPoly_model_rfe$model_external_performance_parameter_list
-    print("Support Vector Machines (with Polynomial Kernel function)")
-    print(svmPoly_model_performance)
+    cat("Support Vector Machines (with Polynomial Kernel function)")
+    cat(svmPoly_model_performance)
     # Progress bar
     if (!is.null(progress_bar) && progress_bar == "tcltk") {
         setTkProgressBar(fs_progress_bar, value = 0.30, title = NULL, label = "Linear Support Vector Machines")
@@ -4753,8 +4767,8 @@ model_ensemble_embedded_fs <- function(training_set, features_to_select = 20, co
     svmLinear_model_external_validation_confusion_matrix <- svmLinear_model_rfe$external_validation_confusion_matrix
     svmLinear_model_external_validation_confusion_matrix_df <- svmLinear_model_rfe$external_validation_confusion_matrix_df
     svmLinear_model_external_performance_parameter_list <- svmLinear_model_rfe$model_external_performance_parameter_list
-    print("Support Vector Machines (with Linear Kernel function)")
-    print(svmLinear_model_performance)
+    cat("Support Vector Machines (with Linear Kernel function)")
+    cat(svmLinear_model_performance)
     # Progress bar
     if (!is.null(progress_bar) && progress_bar == "tcltk") {
         setTkProgressBar(fs_progress_bar, value = 0.40, title = NULL, label = "Random Forest")
@@ -4774,8 +4788,8 @@ model_ensemble_embedded_fs <- function(training_set, features_to_select = 20, co
     rf_model_external_validation_confusion_matrix <- rf_model_rfe$external_validation_confusion_matrix
     rf_model_external_validation_confusion_matrix_df <- rf_model_rfe$external_validation_confusion_matrix_df
     rf_model_external_performance_parameter_list <- rf_model_rfe$model_external_performance_parameter_list
-    print("Random Forest")
-    print(rf_model_performance)
+    cat("Random Forest")
+    cat(rf_model_performance)
     # Progress bar
     if (!is.null(progress_bar) && progress_bar == "tcltk") {
         setTkProgressBar(fs_progress_bar, value = 0.50, title = NULL, label = "Naive Bayes Classifier")
@@ -4795,8 +4809,8 @@ model_ensemble_embedded_fs <- function(training_set, features_to_select = 20, co
     nbc_model_external_validation_confusion_matrix <- nbc_model_rfe$external_validation_confusion_matrix
     nbc_model_external_validation_confusion_matrix_df <- nbc_model_rfe$external_validation_confusion_matrix_df
     nbc_model_external_performance_parameter_list <- nbc_model_rfe$model_external_performance_parameter_list
-    print("Naive Bayes Classifier")
-    print(nbc_model_performance)
+    cat("Naive Bayes Classifier")
+    cat(nbc_model_performance)
     # Progress bar
     if (!is.null(progress_bar) && progress_bar == "tcltk") {
         setTkProgressBar(fs_progress_bar, value = 0.60, title = NULL, label = "k-Nearest Neighbor")
@@ -4816,8 +4830,8 @@ model_ensemble_embedded_fs <- function(training_set, features_to_select = 20, co
     knn_model_external_validation_confusion_matrix <- knn_model_rfe$external_validation_confusion_matrix
     knn_model_external_validation_confusion_matrix_df <- knn_model_rfe$external_validation_confusion_matrix_df
     knn_model_external_performance_parameter_list <- knn_model_rfe$model_external_performance_parameter_list
-    print("k-Nearest Neighbor")
-    print(knn_model_performance)
+    cat("k-Nearest Neighbor")
+    cat(knn_model_performance)
     # Progress bar
     if (!is.null(progress_bar) && progress_bar == "tcltk") {
         setTkProgressBar(fs_progress_bar, value = 0.70, title = NULL, label = "Neural Network")
@@ -4837,8 +4851,8 @@ model_ensemble_embedded_fs <- function(training_set, features_to_select = 20, co
     nnet_model_external_validation_confusion_matrix <- nnet_model_rfe$external_validation_confusion_matrix
     nnet_model_external_validation_confusion_matrix_df <- nnet_model_rfe$external_validation_confusion_matrix_df
     nnet_model_external_performance_parameter_list <- nnet_model_rfe$model_external_performance_parameter_list
-    print("Neural Network")
-    print(nnet_model_performance)
+    cat("Neural Network")
+    cat(nnet_model_performance)
     # Progress bar
     if (!is.null(progress_bar) && progress_bar == "tcltk") {
         setTkProgressBar(fs_progress_bar, value = 0.80, title = NULL, label = "Bayesian Generalized Linear Model")
@@ -4858,8 +4872,8 @@ model_ensemble_embedded_fs <- function(training_set, features_to_select = 20, co
     BGLM_model_external_validation_confusion_matrix <- BGLM_model_rfe$external_validation_confusion_matrix
     BGLM_model_external_validation_confusion_matrix_df <- BGLM_model_rfe$external_validation_confusion_matrix_df
     BGLM_model_external_performance_parameter_list <- BGLM_model_rfe$model_external_performance_parameter_list
-    print("Bayesian Generalized Linear Model")
-    print(BGLM_model_performance)
+    cat("Bayesian Generalized Linear Model")
+    cat(BGLM_model_performance)
     ##### Elements for the RData
     # Progress bar
     if (!is.null(progress_bar) && progress_bar == "tcltk") {
@@ -5231,9 +5245,9 @@ model_ensemble_training_and_tuning <- function(training_set_feature_selection, n
     pls_model_class_list <- pls_model_training_and_tuning$class_list
     pls_model_ID <- "pls"
     pls_model_performance <- pls_model_training_and_tuning$fs_model_performance
-    print("Partial Least Squares")
-    print(pls_model_features)
-    print(pls_model_performance)
+    cat("Partial Least Squares")
+    cat(pls_model_features)
+    cat(pls_model_performance)
     # Progress bar
     if (!is.null(progress_bar) && progress_bar == "tcltk") {
         setTkProgressBar(fs_progress_bar, value = 0.12, title = NULL, label = "RBF Support Vector Machines")
@@ -5247,9 +5261,9 @@ model_ensemble_training_and_tuning <- function(training_set_feature_selection, n
     svmRadial_model_class_list <- svmRadial_model_training_and_tuning$class_list
     svmRadial_model_ID <- "svm"
     svmRadial_model_performance <- svmRadial_model_training_and_tuning$fs_model_performance
-    print("Support Vector Machines (with Radial Basis Kernel function)")
-    print(svmRadial_model_features)
-    print(svmRadial_model_performance)
+    cat("Support Vector Machines (with Radial Basis Kernel function)")
+    cat(svmRadial_model_features)
+    cat(svmRadial_model_performance)
     # Progress bar
     if (!is.null(progress_bar) && progress_bar == "tcltk") {
         setTkProgressBar(fs_progress_bar, value = 0.24, title = NULL, label = "Polynomial Support Vector Machines")
@@ -5263,9 +5277,9 @@ model_ensemble_training_and_tuning <- function(training_set_feature_selection, n
     svmPoly_model_class_list <- svmPoly_model_training_and_tuning$class_list
     svmPoly_model_ID <- "svm"
     svmPoly_model_performance <- svmPoly_model_training_and_tuning$fs_model_performance
-    print("Support Vector Machines (with Polynomial Kernel function)")
-    print(svmPoly_model_features)
-    print(svmPoly_model_performance)
+    cat("Support Vector Machines (with Polynomial Kernel function)")
+    cat(svmPoly_model_features)
+    cat(svmPoly_model_performance)
     # Progress bar
     if (!is.null(progress_bar) && progress_bar == "tcltk") {
         setTkProgressBar(fs_progress_bar, value = 0.36, title = NULL, label = "Random Forest")
@@ -5279,9 +5293,9 @@ model_ensemble_training_and_tuning <- function(training_set_feature_selection, n
     rf_model_class_list <- rf_model_training_and_tuning$class_list
     rf_model_ID <- "rf"
     rf_model_performance <- rf_model_training_and_tuning$fs_model_performance
-    print("Random Forest")
-    print(rf_model_features)
-    print(rf_model_performance)
+    cat("Random Forest")
+    cat(rf_model_features)
+    cat(rf_model_performance)
     # Progress bar
     if (!is.null(progress_bar) && progress_bar == "tcltk") {
         setTkProgressBar(fs_progress_bar, value = 0.48, title = NULL, label = "Naive Bayes Classifier")
@@ -5295,9 +5309,9 @@ model_ensemble_training_and_tuning <- function(training_set_feature_selection, n
     nbc_model_class_list <- nbc_model_training_and_tuning$class_list
     nbc_model_ID <- "nbc"
     nbc_model_performance <- nbc_model_training_and_tuning$fs_model_performance
-    print("Naive Bayes Classifier")
-    print(nbc_model_features)
-    print(nbc_model_performance)
+    cat("Naive Bayes Classifier")
+    cat(nbc_model_features)
+    cat(nbc_model_performance)
     # Progress bar
     if (!is.null(progress_bar) && progress_bar == "tcltk") {
         setTkProgressBar(fs_progress_bar, value = 0.60, title = NULL, label = "k-Nearest Neighbor")
@@ -5311,9 +5325,9 @@ model_ensemble_training_and_tuning <- function(training_set_feature_selection, n
     knn_model_class_list <- knn_model_training_and_tuning$class_list
     knn_model_ID <- "knn"
     knn_model_performance <- knn_model_training_and_tuning$fs_model_performance
-    print("k-Nearest Neighbor")
-    print(knn_model_features)
-    print(knn_model_performance)
+    cat("k-Nearest Neighbor")
+    cat(knn_model_features)
+    cat(knn_model_performance)
     # Progress bar
     if (!is.null(progress_bar) && progress_bar == "tcltk") {
         setTkProgressBar(fs_progress_bar, value = 0.72, title = NULL, label = "Neural Network")
@@ -5327,9 +5341,9 @@ model_ensemble_training_and_tuning <- function(training_set_feature_selection, n
     nnet_model_class_list <- nnet_model_training_and_tuning$class_list
     nnet_model_ID <- "nnet"
     nnet_model_performance <- nnet_model_training_and_tuning$fs_model_performance
-    print("Neural Network")
-    print(nnet_model_features)
-    print(nnet_model_performance)
+    cat("Neural Network")
+    cat(nnet_model_features)
+    cat(nnet_model_performance)
     ##### Elements for the RData
     # Progress bar
     if (!is.null(progress_bar) && progress_bar == "tcltk") {
@@ -7551,8 +7565,8 @@ genetic_algorithm_graph <- function(input_adjacency_matrix, graph_type = "Prefer
         chromosome_size <- length(chromosome)
         # Calculate the number of 1 (simply the sum of the numbers in the chromosome, which is composed only of 0 and 1)
         number_of_ones <- sum(chromosome)
-        # print(chromosome)
-        # print(number_of_ones)
+        # cat(chromosome)
+        # cat(number_of_ones)
         # Generate the adjacency matrix (n x n)
         chromosome_adjacency_matrix <- matrix(0, nrow = chromosome_size, ncol = chromosome_size)
         # Fill in the adjacency matrix
@@ -7605,8 +7619,8 @@ genetic_algorithm_graph <- function(input_adjacency_matrix, graph_type = "Prefer
         chromosome_size <- length(chromosome)
         # Calculate the number of 1 (simply the sum of the numbers in the chromosome, which is composed only of 0 and 1)
         number_of_ones <- sum(chromosome)
-        # print(chromosome)
-        # print(number_of_ones)
+        # cat(chromosome)
+        # cat(number_of_ones)
         # Generate the adjacency matrix (n x n)
         chromosome_adjacency_matrix <- matrix(0, nrow = chromosome_size, ncol = chromosome_size)
         # Fill in the adjacency matrix
@@ -7639,7 +7653,7 @@ genetic_algorithm_graph <- function(input_adjacency_matrix, graph_type = "Prefer
     )
     #finaltime <- proc.time() - ptm
     #out <- summary(GA_model)
-    #print(out)
+    #cat(out)
     # Stop the cluster for parallel computing (only on Windows)
     if (Sys.info()[1] == "Windows" && allow_parallelization == TRUE) {
         stopCluster(cls)
@@ -7758,10 +7772,10 @@ from_GA_to_MS <- function(final_chromosome_GA, spectra, spectra_format = "imzml"
     ##### Print outputs
     #BestFitv <- abs(GA_model@fitnessValue)
     #x <- (BestFitv/choose(vertex_number,2))*100
-    #print("difference %")
-    #print(x)
-    #print("cpu time")
-    #print(finaltime)
+    #cat("difference %")
+    #cat(x)
+    #cat("cpu time")
+    #cat(finaltime)
     #file_explan <- "SolPlot"
     #FILE_NAME <- sprintf("%s%s%s%s%s",vertex_number,"_",graph_type,"_",file_explan)
     ### Return
@@ -7887,8 +7901,8 @@ graph_MSI_segmentation <- function(filepath_imzml, preprocessing_parameters = li
         peaklist_matrix <- generate_custom_intensity_matrix(spectra = spectra, custom_feature_vector = custom_feature_vector, tof_mode = tof_mode, preprocessing_parameters = preprocessing_parameters, peak_picking_algorithm = peak_picking_algorithm, deisotope_peaklist = deisotope_peaklist, peak_picking_SNR = SNR, peak_filtering_frequency_threshold_percent = peak_filtering_frequency_threshold_percent, low_intensity_peak_removal_threshold_percent = low_intensity_peak_removal_threshold_percent, low_intensity_peak_removal_threshold_method = low_intensity_peak_removal_threshold_method, allow_parallelization = allow_parallelization)
         ### If a NULL value is returned, it means that the model is incompatible with the features in the dataset
         if (!is.null(peaklist_matrix)) {
-            print("The graph segmentation will be computed using these features:")
-            print(colnames(peaklist_matrix))
+            cat("The graph segmentation will be computed using these features:")
+            cat(colnames(peaklist_matrix))
             # Compute the adjacency matrix
             input_adjacency_matrix <- generate_adjacency_matrix(peaklist_matrix, correlation_method = correlation_method_for_adjacency_matrix, correlation_threshold = correlation_threshold_for_adjacency_matrix, pvalue_threshold = pvalue_threshold_for_adjacency_matrix)
             # Run the genetic algorithm
@@ -7936,7 +7950,7 @@ graph_MSI_segmentation <- function(filepath_imzml, preprocessing_parameters = li
             ### Return
             return(list(spectra_for_plotting = spectra_all_for_plotting, spectra_clique = MS_from_GA$spectra_clique, spectra_independent = MS_from_GA$spectra_independent, msi_segmentation = msi_segmentation, graph_spectra_plot = graph_spectra_plot, final_graph_plot = final_graph_plot, ga_model_plot = ga_model_plot, peaklist_matrix = peaklist_matrix))
         } else {
-            print("The graph segmentation cannot be computed!")
+            cat("The graph segmentation cannot be computed!")
             return(NULL)
         }
     }
@@ -7947,6 +7961,7 @@ graph_MSI_segmentation <- function(filepath_imzml, preprocessing_parameters = li
 
 
 ################################################################################
+
 
 
 
@@ -8047,7 +8062,7 @@ graph_MSI_segmentation <- function(filepath_imzml, preprocessing_parameters = li
 
 
 ### Program version (Specified by the program writer!!!!)
-R_script_version <- "2017.05.31.0"
+R_script_version <- "2017.06.01.0"
 ### GitHub URL where the R file is
 github_R_url <- "https://raw.githubusercontent.com/gmanuel89/Ensemble-MS-Tuner/master/ENSEMBLE%20MS%20TUNER.R"
 ### GitHub URL of the program's WIKI
@@ -8075,7 +8090,7 @@ filepath_import <- NULL
 output_folder <- getwd()
 file_type_export_matrix <- "csv"
 allow_parallelization <- FALSE
-model_tuning <- "embedded"
+model_tuning <- "after"
 selection_metric <- "Accuracy"
 automatically_select_features <- FALSE
 generate_plots <- TRUE
