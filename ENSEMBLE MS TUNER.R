@@ -7980,7 +7980,7 @@ ensemble_ms_tuner <- function() {
     
     
     ### Program version (Specified by the program writer!!!!)
-    R_script_version <- "2017.06.09.4"
+    R_script_version <- "2017.06.09.5"
     ### GitHub URL where the R file is
     github_R_url <- "https://raw.githubusercontent.com/gmanuel89/Ensemble-MS-Tuner/master/ENSEMBLE%20MS%20TUNER.R"
     ### GitHub URL of the program's WIKI
@@ -7988,7 +7988,7 @@ ensemble_ms_tuner <- function() {
     ### Name of the file when downloaded
     script_file_name <- "ENSEMBLE MS TUNER"
     # Change log
-    change_log <- "1. Bugfix"
+    change_log <- "1. Bugfix\n2. Choose manually which features to retain"
     
     
     
@@ -8313,10 +8313,10 @@ ensemble_ms_tuner <- function() {
             tkmessageBox(title = "Discriminant feature", message = "Select the discriminant feature", icon = "info")
             discriminant_attribute <- select.list(c(non_features, "NONE"), title = "Discriminant attribute", preselect = "Class")
             if (discriminant_attribute == "NONE") {
-                discriminant_attribute <- ""
+                discriminant_attribute <- NULL
             }
             ## Class list
-            if (discriminant_attribute == "NONE") {
+            if (discriminant_attribute == "NONE" || discriminant_attribute == "") {
                 class_list <- discriminant_attribute
             } else {
                 class_list <- levels(as.factor(peaklist[, discriminant_attribute]))
@@ -8324,8 +8324,8 @@ ensemble_ms_tuner <- function() {
             ##### Force peaks
             # Peaks to retain
             tkmessageBox(title = "Features to retain", message = "Select the features to retain", icon = "info")
-            features_to_retain <- select.list(c(feature_vector[feature_vector != non_features], "ALL"), title = "Features to retain", preselect = "ALL")
-            if (features_to_retain == "ALL") {
+            features_to_retain <- select.list(c(feature_vector[feature_vector != non_features], "ALL"), title = "Features to retain", multiple = TRUE, preselect = "ALL")
+            if ("ALL" %in% features_to_retain) {
                 features_to_retain <- feature_vector[feature_vector != non_features]
             }
             # Shrink the peaklist
@@ -8903,4 +8903,3 @@ ensemble_ms_tuner <- function() {
 
 ### Run the function
 ensemble_ms_tuner()
-
