@@ -1,12 +1,12 @@
+# Clear the console
+cat("\014")
+# Empty the workspace
+rm(list = ls())
+
 functions_mass_spectrometry <- function() {
     
-    ################## FUNCTIONS - MASS SPECTROMETRY 2017.06.08 ################
-    # Each function is assigned with <<- instead of <-, so when called by the huge functions_mass_spectrometry function they go in the global environment, like as if the script is directly sourced from the file.
-    
-    # Clear the console
-    #cat("\014")
-    # Empty the workspace
-    #rm(list = ls())
+    ################## FUNCTIONS - MASS SPECTROMETRY 2017.06.09 ################
+    # Each function is assigned with <<- instead of <-, so when called by the huge functions_mass_spectrometry() function they go in the global environment, like as if the script was directly sourced from the file.
     
     
     ########################################################################## MISC
@@ -183,7 +183,7 @@ functions_mass_spectrometry <- function() {
     ########################################################### ENSEMBLE VOTE MATRIX
     # The function takes as input the result matrix of an ensemble classification: each row is an observation/spectrum (patient or pixel) and each column is the predicted class of that observation by one model.
     # The function returns a single column matrix with the ensemble classification results computed according to the input parameters (such as vote weights and method).
-    ensemble_vote_classification <<- function(classification_matrix, class_list = NULL, decision_method = "majority", vote_weights = "equal", classification_probabilities_list = NULL, bayesian_probabilities_list = NULL) {
+    ensemble_vote_classification <<- function(classification_matrix, class_list = NULL, decision_method = "majority", vote_weights = "equal", classification_probabilities_list = NULL, model_performance_parameter_list = NULL, type_of_validation_for_performance_estimation = "cv") {
         ### Class list
         # Retrieve the class list according to the present classes (if not specified)
         if (is.null(class_list) || length(class_list) == 0) {
@@ -269,7 +269,7 @@ functions_mass_spectrometry <- function() {
                 }
             }
             colnames(classification_ensemble_matrix) <- "Ensemble classification"
-        } else if (decision_method == "majority" && vote_weights == "bayesian probabilities" && (!is.null(bayesian_probabilities_list) && is.list(bayesian_probabilities_list) && length(bayesian_probabilities_list) > 0)) {
+        } else if (decision_method == "majority" && vote_weights == "bayesian probabilities" && (!is.null(model_performance_parameter_list) && is.list(model_performance_parameter_list) && length(model_performance_parameter_list) > 0)) {
             ##### Majority vote: bayesian probabilities
             ## Initialize the final classification ensemble matrix
             classification_ensemble_matrix <- NULL
@@ -285,17 +285,23 @@ functions_mass_spectrometry <- function() {
                 predicted_classes_models <- as.matrix(classification_matrix[s,])
                 # Initialize the class probability list (each element is referred to a class and it is a vector of probabilities for each model for that spectrum): each element of the list will contain the probabilities of the spectrum for that class for all the models. E.g. element named 0 will contain the P(0).
                 class_probs_list <- list()
+                # Determine the type of validation (cross or external) to use
+                if (type_of_validation_for_performance_estimation == "cv" || type_of_validation_for_performance_estimation == "cross validation" || type_of_validation_for_performance_estimation == "CV") {
+                    model_performance_parameter_list <- performance_parameter_list$cv
+                } else if (type_of_validation_for_performance_estimation == "ev" || type_of_validation_for_performance_estimation == "external validation" || type_of_validation_for_performance_estimation == "EV") {
+                    model_performance_parameter_list <- performance_parameter_list$external
+                }
                 # P(d|h) = probability that the class of the real data (d) is a value given the hypothesis (h). E.g. P(d=1|h=1) is the probability that the real data is 1 given that it is really 1, so it is the probability that the class of the patient is really 1 (h=1) when the model says that it is 1 (d=1).
                 # For class 0 --> P(0) = P(d=0|h=0) or P(d=1|h=0) according to if the model says that the patient is 1 (d=1) or 0 (d=0). The hypothesis is always h=0 because we are calculating the probabilities of the data to be of class 0.
                 # For class 1 --> P(1) = P(d=1|h=1) or P(d=0|h=1) according to if the model says that the patient is 1 (d=1) or 0 (d=0). The hypothesis is always h=1 because we are calculating the probabilities of the data to be of class 1.
-                for (m in 1:length(bayesian_probabilities_list)) {
+                for (m in 1:length(model_performance_parameter_list)) {
                     # For each class...
                     for (cl in 1:length(class_list)) {
                         # If the predicted class (by the model) corresponds to the class in evaluation, the probability associated is the likelihood P(d=1|h=1), otherwise it is 1-likelihood P(d=0|h=1)
                         if (predicted_classes_models[m] == class_list[cl]) {
-                            bayesian_prob <- bayesian_probabilities_list[[m]][[(predicted_classes_models[m])]][["likelihood"]]
+                            bayesian_prob <- model_performance_parameter_list[[m]][[(predicted_classes_models[m])]][["sensitivity"]]
                         } else {
-                            bayesian_prob <- 1 - bayesian_probabilities_list[[m]][[(predicted_classes_models[m])]][["likelihood"]]
+                            bayesian_prob <- 1 - model_performance_parameter_list[[m]][[(predicted_classes_models[m])]][["sensitivity"]]
                         }
                         # Append the probability to the vector of probabilities 
                         if (is.null(class_probs_list[[(class_list[cl])]])) {
@@ -307,7 +313,7 @@ functions_mass_spectrometry <- function() {
                 }
                 # Add the prior probability
                 for (l in 1:length(class_probs_list)) {
-                    class_probs_list[[l]] <- append(class_probs_list[[l]], bayesian_probabilities_list[[1]][[(names(class_probs_list)[l])]][["prior"]])
+                    class_probs_list[[l]] <- append(class_probs_list[[l]], model_performance_parameter_list[[1]][[(names(class_probs_list)[l])]][["class proportion"]])
                 }
                 # Calculate the product of probabilities
                 final_class_probs <- list()
@@ -2937,98 +2943,6 @@ functions_mass_spectrometry <- function() {
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     ################################################################ CLASSIFICATION
     
     ############################## SINGLE MODEL CLASSIFICATION (MULTICORE, ENSEMBLE)
@@ -3784,7 +3698,7 @@ functions_mass_spectrometry <- function() {
     # The function outputs a list containing: a matrix with the classification (pixel-by-pixel and/or profile), MS images with the pixel-by-pixel classification, a matrix with the ensemble classification (pixel-by-pixel and/or profile), MS images with the pixel-by-pixel ensemble classification and the plot of the average spectrum with red bars to indicate the signals used for classification.
     # Parallel computation implemented.
     # It outputs NULL values if the classification cannot be performed due to incompatibilities between the model features and the spectral features.
-    spectral_classification <<- function(spectra_path, filepath_R, classification_mode = c("pixel", "profile"), peak_picking_algorithm = "SuperSmoother", deisotope_peaklist = FALSE, preprocessing_parameters = list(mass_range = c(4000,15000), transformation_algorithm = NULL, smoothing_algorithm = "SavitzkyGolay", smoothing_strength = "medium", baseline_subtraction_algorithm = "SNIP", baseline_subtraction_algorithm_parameter = 100, normalization_algorithm = "TIC", normalization_mass_range = NULL, preprocess_spectra_in_packages_of = 0, spectral_alignment_algorithm = NULL), tof_mode = "linear", allow_parallelization = FALSE, decision_method_ensemble = "majority", vote_weights_ensemble = c("equal", "class assignment probabilities"), pixel_grouping = c("single", "moving window average", "graph", "hca"), moving_window_size = 5, number_of_hca_nodes = 10, number_of_spectra_partitions_graph = 1, partitioning_method_graph = "space", correlation_method_for_adjacency_matrix = "pearson", correlation_threshold_for_adjacency_matrix = 0.95, pvalue_threshold_for_adjacency_matrix = 0.05, max_GA_generations = 10, iterations_with_no_change_GA = 5, seed = 12345, classification_mode_graph = c("average spectra", "single spectra clique"), features_to_use_for_graph = c("all", "model"), plot_figures = TRUE, plot_graphs = TRUE, plot_legends = c("sample name", "legend", "plot name"), progress_bar = NULL) {
+    spectral_classification <<- function(spectra_path, filepath_R, model_list = NULL, model_performance_parameter_list = NULL, classification_mode = c("pixel", "profile"), peak_picking_algorithm = "SuperSmoother", deisotope_peaklist = FALSE, preprocessing_parameters = list(mass_range = c(4000,15000), transformation_algorithm = NULL, smoothing_algorithm = "SavitzkyGolay", smoothing_strength = "medium", baseline_subtraction_algorithm = "SNIP", baseline_subtraction_algorithm_parameter = 100, normalization_algorithm = "TIC", normalization_mass_range = NULL, preprocess_spectra_in_packages_of = 0, spectral_alignment_algorithm = NULL), tof_mode = "linear", allow_parallelization = FALSE, decision_method_ensemble = "majority", vote_weights_ensemble = c("equal", "class assignment probabilities"), pixel_grouping = c("single", "moving window average", "graph", "hca"), moving_window_size = 5, number_of_hca_nodes = 10, number_of_spectra_partitions_graph = 1, partitioning_method_graph = "space", correlation_method_for_adjacency_matrix = "pearson", correlation_threshold_for_adjacency_matrix = 0.95, pvalue_threshold_for_adjacency_matrix = 0.05, max_GA_generations = 10, iterations_with_no_change_GA = 5, seed = 12345, classification_mode_graph = c("average spectra", "single spectra clique"), features_to_use_for_graph = c("all", "model"), plot_figures = TRUE, plot_graphs = TRUE, plot_legends = c("sample name", "legend", "plot name"), progress_bar = NULL) {
         ### Install and load the required packages
         install_and_load_required_packages(c("MALDIquant", "MALDIquantForeign", "XML", "stats", "parallel", "kernlab", "MASS", "klaR", "pls", "randomForest", "lda", "caret", "nnet"))
         ### Defaults
@@ -3863,14 +3777,16 @@ functions_mass_spectrometry <- function() {
                 }
             }
             ### LOAD THE R WORKSPACE WITH THE MODEL LIST
-            # Create a temporary environment
-            temporary_environment <- new.env()
-            # Load the workspace
-            load(filepath_R, envir = temporary_environment)
-            # Get the models (R objects) from the workspace
-            model_list <- get("model_list", pos = temporary_environment)
-            # Load the bayesian probabilities for vote weights
-            model_bayesian_probabilities <- get("model_bayesian_probabilities", pos = temporary_environment)
+            if (is.null(model_list) && is.null(model_performance_parameter_list) && !is.null(filepath_R) && is.character(filepath_R)) {
+                # Create a temporary environment
+                temporary_environment <- new.env()
+                # Load the workspace
+                load(filepath_R, envir = temporary_environment)
+                # Get the models (R objects) from the workspace
+                model_list <- get("model_list", pos = temporary_environment)
+                # Load the bayesian probabilities for vote weights
+                model_performance_parameter_list <- get("model_performance_parameter_list", pos = temporary_environment)
+            }
             # Get the list of models
             list_of_models <- names(model_list)
             # For each model...
@@ -3952,7 +3868,7 @@ functions_mass_spectrometry <- function() {
             if ("pixel" %in% classification_mode) {
                 if (length(list_of_models) > 2 && !is.null(final_result_matrix_msi_patient) && classes_are_the_same_for_each_model == TRUE && outcomes_are_the_same_for_each_model == TRUE) {
                     ### Classification matrix
-                    classification_ensemble_matrix_msi <- ensemble_vote_classification(classification_matrix = final_result_matrix_msi_patient, class_list = model_list[[1]]$class_list, decision_method = decision_method_ensemble, vote_weights = vote_weights_ensemble, classification_probabilities_list = predicted_classes_probs_list, bayesian_probabilities_list = model_bayesian_probabilities)
+                    classification_ensemble_matrix_msi <- ensemble_vote_classification(classification_matrix = final_result_matrix_msi_patient, class_list = model_list[[1]]$class_list, decision_method = decision_method_ensemble, vote_weights = vote_weights_ensemble, classification_probabilities_list = predicted_classes_probs_list, performance_parameter_list = model_performance_parameter_list)
                     # Store the ensemble classification matrix in the final output list
                     classification_ensemble_matrix_msi_all[[sample_name]] <- classification_ensemble_matrix_msi
                     ### Molecular image of the classification
@@ -3998,7 +3914,7 @@ functions_mass_spectrometry <- function() {
             if ("profile" %in% classification_mode) {
                 if (length(list_of_models) > 2 && !is.null(final_result_matrix_profile_patient) && classes_are_the_same_for_each_model == TRUE && outcomes_are_the_same_for_each_model == TRUE) {
                     ########## Ensemble results
-                    classification_ensemble_matrix_profile <- ensemble_vote_classification(classification_matrix = final_result_matrix_profile_patient, class_list = model_list[[1]]$class_list, decision_method = decision_method_ensemble, vote_weights = vote_weights_ensemble, classification_probabilities_list = predicted_classes_probs_list)
+                    classification_ensemble_matrix_profile <- ensemble_vote_classification(classification_matrix = final_result_matrix_profile_patient, class_list = model_list[[1]]$class_list, decision_method = decision_method_ensemble, vote_weights = vote_weights_ensemble, classification_probabilities_list = predicted_classes_probs_list, performance_parameter_list = model_performance_parameter_list)
                     # Store the ensemble classification matrix in the final output list
                     if (is.null(classification_ensemble_matrix_profile_all)) {
                         classification_ensemble_matrix_profile_all <- classification_ensemble_matrix_profile
@@ -4992,14 +4908,18 @@ functions_mass_spectrometry <- function() {
         colnames(common_features_matrix) <- "Common model features"
         ### Build the matrix with the model performances
         model_performance_matrix <- extract_performance_matrix_from_model_list(filepath_R = model_list)
-        ### Extract the bayesian probabilities from the model list
-        model_bayesian_probabilities <- extract_bayesian_probabilities_from_model_list(filepath_R = model_list)
+        ### Models performance parameter list
+        model_performance_parameter_list <- list("cv" = list(), "external" = list())
+        for (m in 1:length(model_list)) {
+            model_performance_parameter_list[["cv"]][[names(model_list)[m]]] <- model_list[[m]]$model_cv_performance_parameter_list
+            model_performance_parameter_list[["external"]][[names(model_list)[m]]] <- model_list[[m]]$model_external_performance_parameter_list
+        }
         # Progress bar
         if (!is.null(progress_bar)) {
             close(fs_progress_bar)
         }
         ##### Return
-        return(list(model_list = model_list, feature_list = feature_list, common_features_list = common_features_list, training_set_common_features = training_set_common_features, common_features_matrix = common_features_matrix, model_performance_matrix = model_performance_matrix, model_bayesian_probabilities = model_bayesian_probabilities))
+        return(list(model_list = model_list, feature_list = feature_list, common_features_list = common_features_list, training_set_common_features = training_set_common_features, common_features_matrix = common_features_matrix, model_performance_matrix = model_performance_matrix, model_performance_parameter_list = model_performance_parameter_list))
     }
     
     
@@ -5043,6 +4963,7 @@ functions_mass_spectrometry <- function() {
                 }
                 # Determine the performance parameters (create a vector with all of them, named)
                 performance_parameter_vector <- vector()
+                performance_parameter_vector[["class proportion"]] <- nrow(training_set[training_set[, discriminant_attribute] == positive_class_cv, ]) / nrow(training_set)
                 performance_parameter_vector[["recall"]] <- recall(confusion_matrix$table, positive = positive_class_cv)
                 performance_parameter_vector[["precision"]] <- precision(confusion_matrix$table, positive = positive_class_cv)
                 performance_parameter_vector[["sensitivity"]] <- sensitivity(confusion_matrix$table, positive = positive_class_cv)
@@ -5051,7 +4972,7 @@ functions_mass_spectrometry <- function() {
                 performance_parameter_vector[["NPV"]] <- negPredValue(confusion_matrix$table, positive = positive_class_cv)
                 performance_parameter_vector[["balanced accuracy"]] <- (performance_parameter_vector[["sensitivity"]] + performance_parameter_vector[["specificity"]]) / 2
                 # Store the vector in the list, named according to the positive class of the CV
-                performance_parameter_list[[positive_class_cv]][["parameters"]] <- performance_parameter_vector
+                performance_parameter_list[[positive_class_cv]] <- performance_parameter_vector
             }
             ### Return
             return(list(performance_parameter_list = performance_parameter_list, confusion_matrix = confusion_matrix, confusion_matrix_df = confusion_matrix_df))
@@ -5081,6 +5002,7 @@ functions_mass_spectrometry <- function() {
                 }
                 # Determine the performance parameters (create a vector with all of them, named)
                 performance_parameter_vector <- vector()
+                performance_parameter_vector[["class proportion"]] <- nrow(training_set[training_set[, discriminant_attribute] == positive_class_cv, ]) / nrow(training_set)
                 performance_parameter_vector[["recall"]] <- recall(confusion_matrix$table, positive = positive_class_cv)
                 performance_parameter_vector[["precision"]] <- precision(confusion_matrix$table, positive = positive_class_cv)
                 performance_parameter_vector[["sensitivity"]] <- sensitivity(confusion_matrix$table, positive = positive_class_cv)
@@ -5089,7 +5011,7 @@ functions_mass_spectrometry <- function() {
                 performance_parameter_vector[["NPV"]] <- negPredValue(confusion_matrix$table, positive = positive_class_cv)
                 performance_parameter_vector[["balanced accuracy"]] <- (performance_parameter_vector[["sensitivity"]] + performance_parameter_vector[["specificity"]]) / 2
                 # Store the vector in the list, named according to the positive class of the CV
-                performance_parameter_list[[positive_class_cv]][["parameters"]] <- performance_parameter_vector
+                performance_parameter_list[[positive_class_cv]] <- performance_parameter_vector
             }
             ### Return
             return(list(performance_parameter_list = performance_parameter_list, confusion_matrix = confusion_matrix, confusion_matrix_df = confusion_matrix_df))
@@ -7439,142 +7361,6 @@ functions_mass_spectrometry <- function() {
     
     
     
-    ################################# EXTRACT BAYESIAN PROBABILITIES FROM MODEL LIST
-    # The function takes an RData workspace as input, in which there are all the models. The model_list is a list in which each element corresponds to a list containing the model object, the feature list, the class list and the outcome list and its tuning/cross-validation performance. If the input is the model list, the same operations are performed (only the import of the model_list from the RData is skipped).
-    # The function returns a list in which each element corresponds to a model's (named according to the model_list names) bayesian probabilities (prior and likelihood).
-    extract_bayesian_probabilities_from_model_list <<- function(filepath_R) {
-        if (!is.list(filepath_R)) {
-            ### LOAD THE R WORKSPACE WITH THE MODEL LIST
-            # Create a temporary environment
-            temporary_environment <- new.env()
-            # Load the workspace
-            load(filepath_R, envir = temporary_environment)
-            # Get the models (R objects) from the workspace
-            model_list <- get("model_list", pos = temporary_environment)
-        } else if (is.list(filepath_R)) {
-            model_list <- filepath_R
-        }
-        # Get the list of models
-        list_of_models <- names(model_list)
-        ### Initialize the output list
-        bayesian_probabilities_list <- list()
-        ### Extract the performance for each model
-        for (md in 1:length(list_of_models)) {
-            # Initialize the single model list
-            single_model_bayesian_probabilities <- list()
-            # Retrieve the model object
-            single_model <- model_list[[md]]$model
-            # Retrieve the class list
-            class_list <- model_list[[md]]$class_list
-            # Retrieve the training data
-            training_data <- single_model$trainingData
-            # For each class...
-            for (cls in 1:length(class_list)) {
-                # Estimate the prior (proportion of elements with a certain class over the total)
-                single_model_bayesian_probabilities[[class_list[cls]]][["prior"]] <- nrow(training_data[training_data$.outcome == class_list[cls], ]) / nrow(training_data)
-                # Estimate the likelihood (positive predictive value for that class)
-                single_model_bayesian_probabilities[[class_list[cls]]][["likelihood"]] <- posPredValue(confusionMatrix(single_model)$table, positive = class_list[cls])
-            }
-            # Store it in the final list
-            bayesian_probabilities_list[[list_of_models[md]]] <- single_model_bayesian_probabilities
-        }
-        ### Return
-        return(bayesian_probabilities_list)
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     
     
@@ -8129,6 +7915,7 @@ functions_mass_spectrometry <- function() {
 
 
 
+
 ####################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
 
 
@@ -8162,7 +7949,11 @@ functions_mass_spectrometry <- function() {
 
 
 ensemble_ms_tuner <- function() {
+    
     #################### ENSEMBLE MS TUNER ####################
+    # All the functions in the ensemble_ms_tuner() function are run within the ensemble_ms_tuner() function's environment, but they are called from the global environment since they were previously assigned with the <<- in the functions_mass_spectrometry() function.
+    # Each value that must go to the global environment is assigned with the <<- so that it can be called from any function of the ensemble_ms_tuner() function.
+    # In the debugging phase, run the whole code block within the {}, like as if the script was directly sourced from the file.
     
     
     
@@ -8176,7 +7967,7 @@ ensemble_ms_tuner <- function() {
     
     
     ### Program version (Specified by the program writer!!!!)
-    R_script_version <- "2017.06.08.0"
+    R_script_version <- "2017.06.09.0"
     ### GitHub URL where the R file is
     github_R_url <- "https://raw.githubusercontent.com/gmanuel89/Ensemble-MS-Tuner/master/ENSEMBLE%20MS%20TUNER.R"
     ### GitHub URL of the program's WIKI
@@ -8762,14 +8553,14 @@ ensemble_ms_tuner <- function() {
             feature_list <- model_ensemble_tuner$feature_list
             model_performance_matrix <- model_ensemble_tuner$model_performance_matrix
             common_features_matrix <- model_ensemble_tuner$common_features_matrix
-            model_bayesian_probabilities <- model_ensemble_tuner$model_bayesian_probabilities
+            model_performance_parameter_list <- model_ensemble_tuner$model_performance_parameter_list
             ##### DUMP THE FILES
             # Create a folder with the filename export name
             dumping_subfolder <- file.path(output_folder, filename_export)
             dir.create(dumping_subfolder)
             setwd(dumping_subfolder)
             # Dump the RData file
-            save("model_list", "feature_list", "model_performance_matrix", "common_features_matrix", "model_bayesian_probabilities", file = paste0(filename_export, ".RData"))
+            save("model_list", "feature_list", "model_performance_matrix", "common_features_matrix", "model_performance_parameter_list", file = paste0(filename_export, ".RData"))
             # Dump the model performance matrix file
             if (file_type_export_matrix == "csv") {
                 write.csv(model_performance_matrix, file = paste0("Model performance matrix", ".", file_type_export_matrix), row.names = FALSE)
