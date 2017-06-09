@@ -7980,7 +7980,7 @@ ensemble_ms_tuner <- function() {
     
     
     ### Program version (Specified by the program writer!!!!)
-    R_script_version <- "2017.06.09.5"
+    R_script_version <- "2017.06.09.6"
     ### GitHub URL where the R file is
     github_R_url <- "https://raw.githubusercontent.com/gmanuel89/Ensemble-MS-Tuner/master/ENSEMBLE%20MS%20TUNER.R"
     ### GitHub URL of the program's WIKI
@@ -8300,7 +8300,12 @@ ensemble_ms_tuner <- function() {
             ## Rownames
             try({rownames(peaklist) <- peaklist$Sample}, silent = TRUE)
             ## Data type
-            try({peaklist$Sample <- as.character(peaklist$Sample)}, silent = TRUE)
+            try({
+                peaklist$Sample <- as.character(peaklist$Sample)
+                if (length(unique(peaklist$Sample)) < length(peaklist$Sample)) {
+                    peaklist$Sample <- make.names(peaklist$Sample, unique = TRUE)
+                }
+                }, silent = TRUE)
             try({peaklist$Class <- as.factor(peaklist$Class)}, silent = TRUE)
             ##### Separate the mass spectrometric data from the demographic data
             # All features
