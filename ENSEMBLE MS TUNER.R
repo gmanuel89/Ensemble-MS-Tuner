@@ -5,7 +5,7 @@ rm(list = ls())
 
 functions_mass_spectrometry <- function() {
     
-    ################## FUNCTIONS - MASS SPECTROMETRY 2017.06.09 ################
+    ################## FUNCTIONS - MASS SPECTROMETRY 2017.06.12 ################
     # Each function is assigned with <<- instead of <-, so when called by the huge functions_mass_spectrometry() function they go in the global environment, like as if the script was directly sourced from the file.
     
     
@@ -1498,7 +1498,7 @@ functions_mass_spectrometry <- function() {
                         cpu_thread_number <- detectCores(logical = TRUE)
                         if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
                             cpu_thread_number <- cpu_thread_number / 2
-                            spectra_binned <- mclapply(spectra, fun = function (spectra) binning_subfunction(spectra, final_data_points, binning_method), mc.cores = cpu_thread_number)
+                            spectra_binned <- mclapply(spectra, FUN = function(spectra) binning_subfunction(spectra, final_data_points, binning_method), mc.cores = cpu_thread_number)
                         } else if (Sys.info()[1] == "Windows") {
                             cpu_thread_number <- cpu_thread_number - 1
                             cl <- makeCluster(cpu_thread_number)
@@ -2584,7 +2584,7 @@ functions_mass_spectrometry <- function() {
                 cpu_thread_number <- detectCores(logical = TRUE)
                 if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
                     cpu_thread_number <- cpu_thread_number / 2
-                    peaks <- mclapply(spectra, FUN = function(spectra) detectPeaks(spectra, method = peak_picking_algorithm, halfWindowSize = half_window_size, SNR = SNR), mc.cores = cpu_thread_number)
+                    peaks <- detectPeaks(spectra, method = peak_picking_algorithm, halfWindowSize = half_window_size, SNR = SNR, mc.cores = cpu_thread_number)
                 } else if (Sys.info()[1] == "Windows") {
                     cpu_thread_number <- cpu_thread_number - 1
                     # Make the cluster (one for each core/thread)
@@ -2594,10 +2594,10 @@ functions_mass_spectrometry <- function() {
                     peaks <- parLapply(cl, spectra, fun = function(spectra) detectPeaks(spectra, method = peak_picking_algorithm, halfWindowSize = half_window_size, SNR = SNR))
                     stopCluster(cl)
                 } else {
-                    peaks <- lapply(spectra, FUN = function(spectra) detectPeaks(spectra, method = peak_picking_algorithm, halfWindowSize = half_window_size, SNR = SNR))
+                    peaks <- detectPeaks(spectra, method = peak_picking_algorithm, halfWindowSize = half_window_size, SNR = SNR)
                 }
             } else {
-                peaks <- lapply(spectra, FUN = function(spectra) detectPeaks(spectra, method = peak_picking_algorithm, halfWindowSize = half_window_size, SNR = SNR))
+                peaks <- detectPeaks(spectra, method = peak_picking_algorithm, halfWindowSize = half_window_size, SNR = SNR)
             }
         }
         ##### Deisotope peaklist
@@ -2624,7 +2624,7 @@ functions_mass_spectrometry <- function() {
     
     ################################################################### PEAK PICKING
     # This function takes a list of spectra (MALDIquant) and computes the normaliziations which are not in the MALDIquant package (e.g. RMS). Parallel computing is not implemented, since it will be incorporated in the preprocess_spectra function, whch already employs parallelization.
-    normalize_spectra <<- function(spectra, normalization_algorithm = "RMS", normalization_mass_range = NULL) {
+    normalize_spectra <<- function(spectra, normalization_algorithm = "TIC", normalization_mass_range = NULL) {
         # Load required packages
         install_and_load_required_packages(c("MALDIquant", "XML"))
         # Function for lapply (x = spectrum)
@@ -2680,7 +2680,7 @@ functions_mass_spectrometry <- function() {
     
     ################################################################### PEAK PICKING
     # This function takes a list of peaks (MALDIquant) and returns the same peak list without isotopic clusters, only monoisotopic peaks.
-    deisotope_peaks <<- function(peaks, pattern_model_correlation = 0.95, isotopic_tolerance = 10^(-4), isotope_pattern_distance = 1.00235, isotopic_pattern_size = 3L:5L, allow_parallelization = FALSE) {
+    deisotope_peaks <<- function(peaks, pattern_model_correlation = 0.95, isotopic_tolerance = 10^(-4), isotope_pattern_distance = 1.00235, isotopic_pattern_size = 3L:10L, allow_parallelization = FALSE) {
         ##### Load the required packages
         install_and_load_required_packages(c("MALDIquant", "parallel", "XML"))
         ##### Multiple peaks
@@ -2691,7 +2691,7 @@ functions_mass_spectrometry <- function() {
                 cpu_thread_number <- detectCores(logical = TRUE)
                 if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
                     cpu_thread_number <- cpu_thread_number / 2
-                    peaks_deisotoped <- mclapply(peaks, FUN = function(peaks) monoisotopicPeaks(peaks, minCor = pattern_model_correlation, tolerance = isotopic_tolerance, distance = isotope_pattern_distance, size = isotopic_pattern_size), mc.cores = cpu_thread_number)
+                    peaks_deisotoped <- monoisotopicPeaks(peaks, minCor = pattern_model_correlation, tolerance = isotopic_tolerance, distance = isotope_pattern_distance, size = isotopic_pattern_size, mc.cores = cpu_thread_number)
                 } else if (Sys.info()[1] == "Windows") {
                     cpu_thread_number <- cpu_thread_number - 1
                     # Make the CPU cluster for parallelisation
@@ -2705,11 +2705,11 @@ functions_mass_spectrometry <- function() {
                     stopCluster(cl)
                 } else {
                     # Run the algorithm
-                    peaks_deisotoped <- lapply(peaks, FUN = function(peaks) monoisotopicPeaks(peaks, minCor = pattern_model_correlation, tolerance = isotopic_tolerance, distance = isotope_pattern_distance, size = isotopic_pattern_size))
+                    peaks_deisotoped <- monoisotopicPeaks(peaks, minCor = pattern_model_correlation, tolerance = isotopic_tolerance, distance = isotope_pattern_distance, size = isotopic_pattern_size)
                 }
             } else {
                 # Run the algorithm
-                peaks_deisotoped <- lapply(peaks, FUN = function(peaks) monoisotopicPeaks(peaks, minCor = pattern_model_correlation, tolerance = isotopic_tolerance, distance = isotope_pattern_distance, size = isotopic_pattern_size))
+                peaks_deisotoped <- monoisotopicPeaks(peaks, minCor = pattern_model_correlation, tolerance = isotopic_tolerance, distance = isotope_pattern_distance, size = isotopic_pattern_size)
             }
         } else {
             # Run the algorithm
@@ -2739,17 +2739,17 @@ functions_mass_spectrometry <- function() {
                 # Take only the peaks with the highest intensity in the cluster
                 # If it is the first peak, check only the following ones
                 if (int == 1) {
-                    if (intensity_values[int + 1] < intensity_values[int]) {
+                    if ((intensity_values[int + 1] < intensity_values[int]) && (mz_values[int + 1] - mz_values[int] <= 1.1)) {
                         signals_to_keep <- append(signals_to_keep, mz_values[int])
                     }
                 } else if (int == length(intensity_values)) {
                     # If it is the last peak, check only the previous ones
-                    if (intensity_values[int - 1] < intensity_values[int]) {
+                    if ((intensity_values[int - 1] < intensity_values[int]) && (mz_values[int - 1] - mz_values[int] <= 1.1)) {
                         signals_to_keep <- append(signals_to_keep, mz_values[int])
                     }
                 } else {
                     # If it is the random peak, check both the previous and the following ones
-                    if (intensity_values[int - 1] < intensity_values[int] && intensity_values[int + 1] < intensity_values[int]) {
+                    if ((intensity_values[int - 1] < intensity_values[int] && intensity_values[int + 1] < intensity_values[int]) && (mz_values[int - 1] - mz_values[int] <= 1.1 && mz_values[int + 1] - mz_values[int] <= 1.1)) {
                         signals_to_keep <- append(signals_to_keep, mz_values[int])
                     }
                 }
@@ -6769,9 +6769,9 @@ functions_mass_spectrometry <- function() {
         ### Run the alignment only if the vector of custom features is not null
         if (!is.null(custom_feature_vector)) {
             # Check if there are X at the beginning of the feature numbers before converting into numbers
-            if (unlist(strsplit(as.character(custom_feature_vector[1]),""))[1] == "X") {
+            for (f in 1:length(custom_feature_vector)) {
                 # Remove the X
-                for (f in 1:length(custom_feature_vector)) {
+                if (startsWith(custom_feature_vector[f], "X")) {
                     name_splitted <- unlist(strsplit(custom_feature_vector[f],""))
                     feature_def <- name_splitted [2]
                     for (i in 3:length(name_splitted)) {
@@ -6855,7 +6855,7 @@ functions_mass_spectrometry <- function() {
                 # Append the fake spectrum and the fake peaklist to the original lists (the fake will be the first element of the list)
                 spectra_all <- append(fake_spectrum, spectra)
                 peaks_all <- append(fake_peaks, peaks)
-                # Generate the intensity matrix (with the custom features, which will be a little misaligned due to the alignment with the other peaks)
+                # Generate the intensity matrix
                 intensity_matrix_all <- intensityMatrix(peaks_all, spectra_all)
                 # Remove the first row (corresponding to the fake spectrum)
                 intensity_matrix_all <- intensity_matrix_all[2:nrow(intensity_matrix_all), ]
@@ -7929,6 +7929,7 @@ functions_mass_spectrometry <- function() {
 
 
 
+
 ####################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
 
 
@@ -7980,7 +7981,7 @@ ensemble_ms_tuner <- function() {
     
     
     ### Program version (Specified by the program writer!!!!)
-    R_script_version <- "2017.06.09.8"
+    R_script_version <- "2017.06.12.0"
     ### GitHub URL where the R file is
     github_R_url <- "https://raw.githubusercontent.com/gmanuel89/Ensemble-MS-Tuner/master/ENSEMBLE%20MS%20TUNER.R"
     ### GitHub URL of the program's WIKI
@@ -8146,27 +8147,31 @@ ensemble_ms_tuner <- function() {
             # Choose where to save the updated script
             tkmessageBox(title = "Download folder", message = "Select where to save the updated script file", icon = "info")
             download_folder <- tclvalue(tkchooseDirectory())
-            if (!nchar(download_folder)) {
-                # Get the output folder from the default working directory
-                download_folder <- getwd()
-            }
-            # Go to the working directory
-            setwd(download_folder)
-            tkmessageBox(message = paste("The updated script file will be downloaded in:\n\n", download_folder, sep = ""))
-            # Download the file
-            try({
-                download.file(url = github_R_url, destfile = paste(script_file_name, " (", online_version_number, ").R", sep = ""), method = "auto")
-                file_downloaded <- TRUE
-            }, silent = TRUE)
-            if (file_downloaded == TRUE) {
-                tkmessageBox(title = "Updated file downloaded!", message = paste("The updated script, named:\n\n", paste(script_file_name, " (", online_version_number, ").R", sep = ""), "\n\nhas been downloaded to:\n\n", download_folder, "\n\nClose everything, delete this file and run the script from the new file!", sep = ""), icon = "info")
-                tkmessageBox(title = "Changelog", message = paste("The updated script contains the following changes:\n", online_change_log, sep = ""), icon = "info")
+            # Download the file only if a download folder is specified, otherwise don't
+            if (download_folder != "") {
+                # Go to the working directory
+                setwd(download_folder)
+                tkmessageBox(message = paste("The updated script file will be downloaded in:\n\n", download_folder, sep = ""))
+                # Download the file
+                try({
+                    download.file(url = github_R_url, destfile = paste(script_file_name, " (", online_version_number, ").R", sep = ""), method = "auto")
+                    file_downloaded <- TRUE
+                }, silent = TRUE)
+                if (file_downloaded == TRUE) {
+                    tkmessageBox(title = "Updated file downloaded!", message = paste("The updated script, named:\n\n", paste(script_file_name, " (", online_version_number, ").R", sep = ""), "\n\nhas been downloaded to:\n\n", download_folder, "\n\nClose everything, delete this file and run the script from the new file!", sep = ""), icon = "info")
+                    tkmessageBox(title = "Changelog", message = paste("The updated script contains the following changes:\n", online_change_log, sep = ""), icon = "info")
+                } else {
+                    tkmessageBox(title = "Connection problem", message = paste("The updated script file could not be downloaded due to internet connection problems!\n\nManually download the updated script file at:\n\n", github_R_url, sep = ""), icon = "warning")
+                }
             } else {
-                tkmessageBox(title = "Connection problem", message = paste("The updated script file could not be downloaded due to internet connection problems!\n\nManually download the updated script file at:\n\n", github_R_url, sep = ""), icon = "warning")
+                # No download folder specified!
+                tkmessageBox(message = "The updated script file will not be downloaded!")
             }
         } else {
             tkmessageBox(title = "No update available", message = "NO UPDATES AVAILABLE!\n\nThe latest version is running!", icon = "info")
         }
+        # Raise the focus on the main window
+        tkraise(window)
     }
     
     # Outcome list function
@@ -8214,6 +8219,8 @@ ensemble_ms_tuner <- function() {
                 outcome_list_value <<- outcome_list_value
                 # Destroy the window upon committing
                 tkdestroy(outcome_list_window)
+                # Raise the focus on the main window
+                tkraise(window)
             }
             ##### List of variables to get from the GUI
             outcome_list_input <- tclVar("")
@@ -8236,12 +8243,16 @@ ensemble_ms_tuner <- function() {
         } else {
             tkmessageBox(title = "Class list not found", message = "The peaklist file has to be imported first, in order to determine the class list to be matched to a list of outcomes!", icon = "warning")
         }
+        # Raise the focus on the main window
+        tkraise(window)
     }
     
     ##### File type export MATRIX
     file_type_export_matrix_choice <- function() {
         # Catch the value from the menu
         file_type_export_matrix <- select.list(c("csv","xlsx","xls"), title = "Choose", multiple = FALSE, preselect = "csv")
+        # Raise the focus on the main window
+        tkraise(window)
         # Default
         if (file_type_export_matrix == "") {
             file_type_export_matrix <- "csv"
@@ -8254,6 +8265,8 @@ ensemble_ms_tuner <- function() {
         # Set the value of the displaying label
         file_type_export_matrix_value_label <- tklabel(window, text = file_type_export_matrix, font = label_font, bg = "white", width = 20)
         tkgrid(file_type_export_matrix_value_label, row = 6, column = 6)
+        # Raise the focus on the main window
+        tkraise(window)
     }
     
     ##### Preprocessing parameters
@@ -8265,6 +8278,8 @@ ensemble_ms_tuner <- function() {
         } else {
             # Catch the value from the menu
             preprocessing <- select.list(c("center", "scale"), title = "Preprocessing", multiple = TRUE, preselect = NULL)
+            # Raise the focus on the main window
+            tkraise(window)
             # Default
             if (length(preprocessing) == 1 && preprocessing == "") {
                 preprocessing <- NULL
@@ -8283,6 +8298,8 @@ ensemble_ms_tuner <- function() {
         # Escape the function
         preprocessing <<- preprocessing
         preprocessing_value <<- preprocessing_value
+        # Raise the focus on the main window
+        tkraise(window)
     }
     
     ##### Peaklist file
@@ -8358,6 +8375,8 @@ ensemble_ms_tuner <- function() {
             filepath_import <<- filepath_import
             tkmessageBox(title = "No input file selected", message = "No input file has been selected!!!\nPlease, select a file to be imported", icon = "warning")
         }
+        # Raise the focus on the main window
+        tkraise(window)
     }
     
     ##### Output
@@ -8371,6 +8390,8 @@ ensemble_ms_tuner <- function() {
         setwd(output_folder)
         # Exit the function and put the variable into the R workspace
         output_folder <<- output_folder
+        # Raise the focus on the main window
+        tkraise(window)
     }
     
     ##### Exit
@@ -8382,6 +8403,8 @@ ensemble_ms_tuner <- function() {
     model_tuning_choice <- function() {
         # Catch the value from the menu
         model_tuning <- select.list(c("None", "after", "embedded"), title = "Model tuning", multiple = FALSE, preselect = "after")
+        # Raise the focus on the main window
+        tkraise(window)
         # Default
         if (model_tuning == "") {
             model_tuning <- "None"
@@ -8398,12 +8421,16 @@ ensemble_ms_tuner <- function() {
         # Escape the function
         model_tuning <<- model_tuning
         model_tuning_value <<- model_tuning_value
+        # Raise the focus on the main window
+        tkraise(window)
     }
     
     ##### Automatically select features
     automatically_select_features_choice <- function() {
         # Catch the value from the menu
         automatically_select_features <- select.list(c("YES","NO"), title = "Automatically select features", multiple = FALSE, preselect = "NO")
+        # Raise the focus on the main window
+        tkraise(window)
         # Default
         if (automatically_select_features == "YES") {
             automatically_select_features <- TRUE
@@ -8422,12 +8449,16 @@ ensemble_ms_tuner <- function() {
         # Escape the function
         automatically_select_features <<- automatically_select_features
         automatically_select_features_value <<- automatically_select_features_value
+        # Raise the focus on the main window
+        tkraise(window)
     }
     
     ##### Generate plots
     generate_plots_choice <- function() {
         # Catch the value from the menu
         generate_plots <- select.list(c("YES","NO"), title = "Generate plots", multiple = FALSE, preselect = "NO")
+        # Raise the focus on the main window
+        tkraise(window)
         # Default
         if (generate_plots == "YES") {
             generate_plots <- TRUE
@@ -8446,12 +8477,16 @@ ensemble_ms_tuner <- function() {
         # Escape the function
         generate_plots <<- generate_plots
         generate_plots_value <<- generate_plots_value
+        # Raise the focus on the main window
+        tkraise(window)
     }
     
     ##### Try combination of parameters
     try_combination_of_parameters_choice <- function() {
         # Catch the value from the menu
         try_combination_of_parameters <- select.list(c("YES","NO"), title = "Try combination of parameters", multiple = FALSE, preselect = "YES")
+        # Raise the focus on the main window
+        tkraise(window)
         # Default
         if (try_combination_of_parameters == "YES") {
             try_combination_of_parameters <- TRUE
@@ -8479,6 +8514,8 @@ ensemble_ms_tuner <- function() {
         try_combination_of_parameters_value <<- try_combination_of_parameters_value
         preprocessing <<- preprocessing
         preprocessing_value <<- preprocessing_value
+        # Raise the focus on the main window
+        tkraise(window)
     }
     
     ##### Feature reranking
@@ -8486,6 +8523,8 @@ ensemble_ms_tuner <- function() {
         # Prompt the selection only if the combination of parameters is not selected, otherwise there is no point in selecting it...
         # Catch the value from the menu
         feature_reranking <- select.list(c("YES","NO"), title = "Feature reranking", multiple = FALSE, preselect = "YES")
+        # Raise the focus on the main window
+        tkraise(window)
         # Default
         if (feature_reranking == "YES") {
             feature_reranking <- TRUE
@@ -8504,12 +8543,16 @@ ensemble_ms_tuner <- function() {
         # Escape the function
         feature_reranking <<- feature_reranking
         feature_reranking_value <<- feature_reranking_value
+        # Raise the focus on the main window
+        tkraise(window)
     }
     
     ##### Selection metric
     selection_metric_choice <- function() {
         # Catch the value from the menu
         selection_metric <- select.list(c("Accuracy", "Kappa"), title = "Selection metric", multiple = FALSE, preselect = "Accuracy")
+        # Raise the focus on the main window
+        tkraise(window)
         # Default
         if (selection_metric == "") {
             selection_metric <- "Accuracy"
@@ -8518,6 +8561,8 @@ ensemble_ms_tuner <- function() {
         tkgrid(selection_metric_value_label, row = 2, column = 6)
         # Escape the function
         selection_metric <<- selection_metric
+        # Raise the focus on the main window
+        tkraise(window)
     }
     
     ##### Multicore processing
@@ -8544,6 +8589,8 @@ ensemble_ms_tuner <- function() {
         # Escape the function
         allow_parallelization <<- allow_parallelization
         allow_parallelization_value <<- allow_parallelization_value
+        # Raise the focus on the main window
+        tkraise(window)
     }
     
     ##### Run the Ensemble MS Tuner function
@@ -8611,6 +8658,8 @@ ensemble_ms_tuner <- function() {
             ### Messagebox
             tkmessageBox(title = "Something is wrong", message = "No peaklist file has provided or no outcomes have been specified!", icon = "warning")
         }
+        # Raise the focus on the main window
+        tkraise(window)
     }
     
     ##### Show info function
@@ -8792,6 +8841,8 @@ ensemble_ms_tuner <- function() {
     tkwm.resizable(window, FALSE, FALSE)
     #tkpack.propagate(window, FALSE)
     tktitle(window) <- "ENSEMBLE MS TUNER"
+    # Raise the focus on the main window
+    tkraise(window)
     # Title label
     title_label <- tkbutton(window, text = "ENSEMBLE MS TUNER", command = show_info_function, font = title_font, bg = "white", relief = "flat")
     #### Browse
@@ -8903,4 +8954,3 @@ ensemble_ms_tuner <- function() {
 
 ### Run the function
 ensemble_ms_tuner()
-
