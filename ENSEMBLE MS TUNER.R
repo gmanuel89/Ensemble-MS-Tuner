@@ -5,7 +5,7 @@ rm(list = ls())
 
 functions_mass_spectrometry <- function() {
     
-    ################## FUNCTIONS - MASS SPECTROMETRY 2017.06.19 ################
+    ################## FUNCTIONS - MASS SPECTROMETRY 2017.06.21 ################
     # Each function is assigned with <<- instead of <-, so when called by the huge functions_mass_spectrometry() function they go in the global environment, like as if the script was directly sourced from the file.
     
     
@@ -183,7 +183,7 @@ functions_mass_spectrometry <- function() {
     ########################################################### ENSEMBLE VOTE MATRIX
     # The function takes as input the result matrix of an ensemble classification: each row is an observation/spectrum (patient or pixel) and each column is the predicted class of that observation by one model.
     # The function returns a single column matrix with the ensemble classification results computed according to the input parameters (such as vote weights and method).
-    ensemble_vote_classification <<- function(classification_matrix, class_list = NULL, decision_method = "majority", vote_weights = "equal", classification_probabilities_list = NULL, performance_parameter_list = NULL, type_of_validation_for_performance_estimation = "cv") {
+    ensemble_vote_classification <<- function(classification_matrix, class_list = NULL, weighted_decision_method = "bayesian probabilities", classification_probabilities_list = NULL, performance_parameter_list = NULL, type_of_validation_for_performance_estimation = "cv") {
         ### Class list
         # Retrieve the class list according to the present classes (if not specified)
         if (is.null(class_list) || length(class_list) == 0) {
@@ -200,7 +200,7 @@ functions_mass_spectrometry <- function() {
         }
         ########## Vote
         ##### Majority vote: equal weights
-        if (decision_method == "majority" && vote_weights == "equal") {
+        if (weighted_decision_method == "unweighted majority") {
             # Function for matrix apply (x = row)
             majority_vote_function <- function(x, class_list) {
                 # Generate the vote vector (same length as the class list, with the number of the votes for each class, labeled)
@@ -222,7 +222,7 @@ functions_mass_spectrometry <- function() {
             # For each spectrum (matrix row), establish the final majority vote
             classification_ensemble_matrix <- cbind(apply(X = classification_matrix, MARGIN = 1, FUN = function(x) majority_vote_function(x, class_list)))
             colnames(classification_ensemble_matrix) <- "Ensemble classification"
-        } else if (decision_method == "majority" && vote_weights == "class assignment probabilities" && (!is.null(classification_probabilities_list) && is.list(classification_probabilities_list) && length(classification_probabilities_list) > 0)) {
+        } else if (weighted_decision_method == "class assignment probabilities" && (!is.null(classification_probabilities_list) && is.list(classification_probabilities_list) && length(classification_probabilities_list) > 0)) {
             ##### Majority vote: class assignment probabilities
             ## Generate a list in which each element (named according to the pixel/spectrum name) is a vector containing the probability for the assigned class: each element of the vector is a probability, which is associated to the name of the predicted class.
             pixel_probabilities_list <- list()
@@ -269,7 +269,7 @@ functions_mass_spectrometry <- function() {
                 }
             }
             colnames(classification_ensemble_matrix) <- "Ensemble classification"
-        } else if (decision_method == "majority" && vote_weights == "bayesian probabilities" && (!is.null(performance_parameter_list) && is.list(performance_parameter_list) && length(performance_parameter_list) > 0)) {
+        } else if (weighted_decision_method == "bayesian probabilities" && (!is.null(performance_parameter_list) && is.list(performance_parameter_list) && length(performance_parameter_list) > 0)) {
             ##### Majority vote: bayesian probabilities
             ## Initialize the final classification ensemble matrix
             classification_ensemble_matrix <- NULL
@@ -681,8 +681,8 @@ functions_mass_spectrometry <- function() {
     remove_low_intensity_peaks <<- function(peaks, low_intensity_peak_removal_threshold_percent = 1, low_intensity_peak_removal_threshold_method = "element-wise", allow_parallelization = FALSE) {
         ### Load the required libraries
         require(parallel)
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         ### Fix the percentage value
         if (low_intensity_peak_removal_threshold_percent < 0) {
             low_intensity_peak_removal_threshold_percent <- 0
@@ -1000,8 +1000,8 @@ functions_mass_spectrometry <- function() {
     # It returns a NULL value if the peak statistics cannot be performed.
     peak_statistics <<- function(spectra, peaks = NULL, SNR = 3, peak_picking_algorithm = "SuperSmoother", class_list = NULL, class_in_file_path = TRUE, tof_mode = "linear", spectra_format = "imzML", exclude_spectra_without_peak = FALSE, alignment_iterations = 5, peak_filtering_frequency_threshold_percent = 25, remove_outliers = TRUE, low_intensity_peak_removal_threshold_percent = 0, low_intensity_peak_removal_threshold_method = "element_wise", tolerance_ppm = NULL) {
         ########## Load the required libraries
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         require(stats)
         ########## Rename the trim function
         trim_spectra <- get(x = "trim", pos = "package:MALDIquant")
@@ -1670,9 +1670,9 @@ functions_mass_spectrometry <- function() {
     # The function imports the spectral files from the filepath specified. The spectral type can be specified, along with the mass range to cut the spectra during the import phase. The function automatically transforms the backslash in the forward slash on Windows and replace the list names (and the sample name if needed) for a better identification of spectra. It returns NULL if there are no spectra to be imported.
     import_spectra <<- function(filepath, spectra_format = "imzML", mass_range = NULL, allow_parallelization = FALSE, spectral_names = "name", replace_sample_name_field = TRUE, remove_empty_spectra = TRUE) {
         ### Load the packages
+        require(XML)
         require(MALDIquant)
         require(MALDIquantForeign)
-        require(XML)
         require(parallel)
         ### Initialize the spectra variable as NULL
         spectra <- NULL
@@ -1850,8 +1850,8 @@ functions_mass_spectrometry <- function() {
     #################################################### SPECTRA GROUPING (CLASSES)
     # The functions takes a list of spectra (MALDIquant) and generates a list of representative spectra, averaging spectra according to the class they belong to, generating one average spectrum per class.
     group_spectra_class <<- function(spectra, class_list, grouping_method = "mean", spectra_format = "imzML", class_in_file_path = TRUE, class_in_file_name = FALSE, tof_mode = "linear", preprocessing_parameters = list(mass_range = NULL, transformation_algorithm = NULL, smoothing_algorithm = "SavitzkyGolay", smoothing_strength = "medium", baseline_subtraction_algorithm = "SNIP", baseline_subtraction_algorithm_parameter = 100, normalization_algorithm = "TIC", normalization_mass_range = NULL, preprocess_spectra_in_packages_of = 0, spectral_alignment_algorithm = "cubic", spectral_alignment_reference = "average spectrum"), allow_parallelization = FALSE) {
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         ##### Spectral preprocessing
         if (!is.null(preprocessing_parameters) && is.list(preprocessing_parameters) && length(preprocessing_parameters) > 0) {
             spectra <- preprocess_spectra(spectra, tof_mode = tof_mode, preprocessing_parameters = preprocessing_parameters, allow_parallelization = allow_parallelization)
@@ -2093,8 +2093,8 @@ functions_mass_spectrometry <- function() {
     # Plot spectra in a nicer way than the simple plot function. It can be applied to both sigle spectra or a list of spectra, and it will return a single plot object or a list of plot objects.
     plot_spectra <<- function(spectra, mass_range = NULL) {
         ### Load the packages
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         require(ggplot2)
         ### Rename the function
         trim_spectra <- get(x = "trim", pos = "package:MALDIquant")
@@ -2136,8 +2136,8 @@ functions_mass_spectrometry <- function() {
     # If an algorithm is set to NULL, that preprocessing step will not be performed.
     preprocess_spectra <<- function(spectra, tof_mode = "linear", preprocessing_parameters = list(mass_range = NULL, transformation_algorithm = NULL, smoothing_algorithm = "SavitzkyGolay", smoothing_strength = "medium", baseline_subtraction_algorithm = "SNIP", baseline_subtraction_algorithm_parameter = 100, normalization_algorithm = "TIC", normalization_mass_range = NULL, preprocess_spectra_in_packages_of = 0, spectral_alignment_algorithm = NULL, spectral_alignment_reference = "average_spectrum"), allow_parallelization = FALSE, tolerance_ppm = NULL) {
         ##### Load the required libraries
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         require(parallel)
         ##### Rename the trim function
         trim_spectra <- get(x = "trim", pos = "package:MALDIquant")
@@ -2468,8 +2468,8 @@ functions_mass_spectrometry <- function() {
     # This function takes a list of spectra (MALDIquant) as input and returns the average spectrum of the provided dataset with bars onto the peaks, after calculating the standard deviation.
     average_spectrum_bars <<- function(spectra, SNR = 5, peak_picking_algorithm = "SuperSmoother", tof_mode = "linear", tolerance_ppm = NULL, mass_range_plot = c(4000,15000), graph_title = "Spectrum", average_spectrum_color = "black", peak_points = "yes", points_color = "red", bar_width = 40, bar_color = "blue") {
         # Load the required libraries
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         # Rename the trim function
         trim_spectra <- get(x = "trim", pos = "package:MALDIquant")
         # Determine the tolerance in PPM
@@ -2552,8 +2552,8 @@ functions_mass_spectrometry <- function() {
     most_intense_signals <<- function(spectra, signals_to_take = 20, tof_mode = "linear", peak_picking_algorithm = "SuperSmoother", allow_parallelization = FALSE, deisotope_peaklist = FALSE, envelope_peaklist = FALSE) {
         # Load the required libraries
         require(parallel)
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         # Rename the trim function
         trim_spectra <- get(x = "trim", pos = "package:MALDIquant")
         ####################################################### PICKING FUNCTION
@@ -2653,10 +2653,10 @@ functions_mass_spectrometry <- function() {
     ############################################# AVERAGE THE REPLICATES (BY FOLDER)
     # This function averages the spectra contained in the same folder (more suitable for brukerflex format).
     # The function automatically handles missing spectra: sometimes the MALDIquantForeign function does not import spectra because of the calibration, so th spectral files read from the folder and the spectra in the R list are not the same... So the unique spectral names (folder + treatment subfolders) are established on the folder/spectra list, then they are matched to the elements in the list, which have their name replaced... Finally the R list's (unique) names are usedfor averaging.
-    average_replicates_by_folder <<- function(spectra, folder, spectra_format = "brukerflex", averaging_method = "mean") {
+    average_replicates_by_folder <<- function(spectra, folder, spectra_format = "fid", averaging_method = "mean") {
         # Load the required libraries
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         ### Do it only of there are more than one spectra
         if (isMassSpectrumList(spectra)) {
             # Rename the trim function
@@ -2698,11 +2698,29 @@ functions_mass_spectrometry <- function() {
                     }
                 }
             } else if (spectra_format == "imzML" || spectra_format == "txt" || spectra_format == "csv" || spectra_format == "msd") {
-                unique_sample_name <- character()
-                for (f in 1:length(spectra)) {
-                    unique_sample_name <- append(unique_sample_name, spectra[[f]]@metaData$file[1])
+                # Split the path into individual folders (list, each element is a vector with the path splitted for that spectrum)
+                spectra_files_splitted <- list()
+                # Split the paths into folders
+                for (f in 1:length(spectra_files)) {
+                    spectra_files_splitted[f] <- strsplit(spectra_files[f], "/")
                 }
-                spectra_names <- unique_sample_name
+                # Retrieve the sample name (the first folder)
+                sample_name <- character()
+                for (f in 1:length(spectra_files_splitted)) {
+                    sample_name <- append(sample_name, spectra_files_splitted[[f]][1])
+                }
+                unique_sample_name <- unique(sample_name)
+                
+                ### Replace the name in the spectra (match the file path with the unique sample name: the match is very strong because by matching also the "/" the entire folder name must be the same... So even if a folder name is the same as another but with addition, the match does not occur because of the "/", and with it the entire folder must be matched)
+                ### Generate the list of spectral names (from the spectra in the list, because the spectra files does not necessarily match the spectra in the R list, because not every file is readable)
+                spectra_names <- character()
+                for (s in 1:length(spectra)) {
+                    for (f in 1:length(unique_sample_name)) {
+                        if (length(grep(paste0("/", unique_sample_name[f], "/"),  spectra[[s]]@metaData$file[1], fixed = TRUE)) > 0) {
+                            spectra_names <- append(spectra_names, unique_sample_name[f])
+                        }
+                    }
+                }
             }
             # Average the mass spectra, grouping them according to the sample_vector
             if (length(spectra_names) == length(spectra)) {
@@ -2715,7 +2733,7 @@ functions_mass_spectrometry <- function() {
                 if (!is.null(names(spectra_replicates_averaged))) {
                     spectra_names_vector <- names(spectra_replicates_averaged)
                     for (t in 1:length(spectra_names_vector)) {
-                        if (endsWith(spectra_names_vector[t], "/")) {
+                        if (base::endsWith(spectra_names_vector[t], "/")) {
                             spectra_names_vector[t] <- paste(unlist(strsplit(spectra_names_vector[t], "/")), collapse = "/")
                         }
                     }
@@ -2749,8 +2767,8 @@ functions_mass_spectrometry <- function() {
             deisotope_peaklist <- TRUE
         }
         ########## Load the required libraries
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         require(parallel)
         ##### TOF-MODE
         if (tof_mode == "linear") {
@@ -2843,8 +2861,8 @@ functions_mass_spectrometry <- function() {
     # This function takes a list of spectra (MALDIquant) and computes the normaliziations which are not in the MALDIquant package (e.g. RMS). Parallel computing is not implemented, since it will be incorporated in the preprocess_spectra function, whch already employs parallelization.
     normalize_spectra <<- function(spectra, normalization_algorithm = "TIC", normalization_mass_range = NULL) {
         # Load required packages
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         # Function for lapply (x = spectrum)
         normalization_subfunction <- function(x, normalization_algorithm, normalization_mass_range) {
             if (!is.null(normalization_algorithm)) {
@@ -2900,9 +2918,9 @@ functions_mass_spectrometry <- function() {
     # This function takes a list of peaks (MALDIquant) and returns the same peak list without isotopic clusters, only monoisotopic peaks.
     deisotope_peaks <<- function(peaks, pattern_model_correlation = 0.95, isotopic_tolerance = 10^(-4), isotope_pattern_distance = 1.00235, isotopic_pattern_size = 3L:10L, allow_parallelization = FALSE) {
         ##### Load the required packages
+        require(XML)
         require(MALDIquant)
         require(parallel)
-        require(XML)
         ##### Multiple peaks
         if (isMassPeaksList(peaks)) {
             ##### Multiple cores
@@ -2976,9 +2994,9 @@ functions_mass_spectrometry <- function() {
     # This function takes a list of peaks (MALDIquant) and returns the same peak list without isotopic clusters, only the most intense peaks in the clusters.
     envelope_peaks <<- function(peaks, allow_parallelization = FALSE) {
         ##### Load the required packages
+        require(XML)
         require(MALDIquant)
         require(parallel)
-        require(XML)
         ##### Function for lapply
         envelope_peaklist_subfunction <- function(peaks) {
             # Extract the m/z and intensity values
@@ -3105,8 +3123,8 @@ functions_mass_spectrometry <- function() {
         ########## Align only if there are many peaklists
         if (isMassPeaksList(peaks)) {
             ##### Load the required libraries
-            require(MALDIquant)
             require(XML)
+            require(MALDIquant)
             require(parallel)
             ##### Rename the trim function
             trim_spectra <- get(x = "trim", pos = "package:MALDIquant")
@@ -4009,11 +4027,11 @@ functions_mass_spectrometry <- function() {
     # The function outputs a list containing: a matrix with the classification (pixel-by-pixel and/or profile), MS images with the pixel-by-pixel classification, a matrix with the ensemble classification (pixel-by-pixel and/or profile), MS images with the pixel-by-pixel ensemble classification and the plot of the average spectrum with red bars to indicate the signals used for classification.
     # Parallel computation implemented.
     # It outputs NULL values if the classification cannot be performed due to incompatibilities between the model features and the spectral features.
-    spectral_classification <<- function(spectra_path, filepath_R = NULL, model_list, model_performance_parameter_list = NULL, classification_mode = c("pixel", "profile"), peak_picking_algorithm = "SuperSmoother", deisotope_peaklist = FALSE, preprocessing_parameters = list(mass_range = c(4000,15000), transformation_algorithm = NULL, smoothing_algorithm = "SavitzkyGolay", smoothing_strength = "medium", baseline_subtraction_algorithm = "SNIP", baseline_subtraction_algorithm_parameter = 100, normalization_algorithm = "TIC", normalization_mass_range = NULL, preprocess_spectra_in_packages_of = 0, spectral_alignment_algorithm = NULL), tof_mode = "linear", allow_parallelization = FALSE, decision_method_ensemble = "majority", vote_weights_ensemble = c("equal", "class assignment probabilities"), pixel_grouping = c("single", "moving window average", "graph", "hca"), moving_window_size = 5, number_of_hca_nodes = 10, number_of_spectra_partitions_graph = 1, partitioning_method_graph = "space", correlation_method_for_adjacency_matrix = "pearson", correlation_threshold_for_adjacency_matrix = 0.95, pvalue_threshold_for_adjacency_matrix = 0.05, max_GA_generations = 10, iterations_with_no_change_GA = 5, seed = 12345, classification_mode_graph = c("average spectra", "single spectra clique"), features_to_use_for_graph = c("all", "model"), plot_figures = TRUE, plot_graphs = TRUE, plot_legends = c("sample name", "legend", "plot name"), progress_bar = NULL, tolerance_ppm = NULL) {
+    spectral_classification <<- function(spectra_path, filepath_R = NULL, model_list, model_performance_parameter_list = NULL, classification_mode = c("pixel", "profile"), peak_picking_algorithm = "SuperSmoother", deisotope_peaklist = FALSE, preprocessing_parameters = list(mass_range = c(4000,15000), transformation_algorithm = NULL, smoothing_algorithm = "SavitzkyGolay", smoothing_strength = "medium", baseline_subtraction_algorithm = "SNIP", baseline_subtraction_algorithm_parameter = 100, normalization_algorithm = "TIC", normalization_mass_range = NULL, preprocess_spectra_in_packages_of = 0, spectral_alignment_algorithm = NULL), tof_mode = "linear", allow_parallelization = FALSE, decision_method_ensemble = c("unweighted majority", "class assignment probabilities", "bayesian probabilities"), pixel_grouping = c("single", "moving window average", "graph", "hca"), moving_window_size = 5, number_of_hca_nodes = 10, number_of_spectra_partitions_graph = 1, partitioning_method_graph = "space", correlation_method_for_adjacency_matrix = "pearson", correlation_threshold_for_adjacency_matrix = 0.95, pvalue_threshold_for_adjacency_matrix = 0.05, max_GA_generations = 10, iterations_with_no_change_GA = 5, seed = 12345, classification_mode_graph = c("average spectra", "single spectra clique"), features_to_use_for_graph = c("all", "model"), plot_figures = TRUE, plot_graphs = TRUE, plot_legends = c("sample name", "legend", "plot name"), progress_bar = NULL, tolerance_ppm = NULL) {
         ### Install and load the required packages
+        require(XML)
         require(MALDIquant)
         require(MALDIquantForeign)
-        require(XML)
         require(stats)
         require(parallel)
         require(kernlab)
@@ -4192,45 +4210,141 @@ functions_mass_spectrometry <- function() {
             ########## Ensemble results
             if ("pixel" %in% classification_mode) {
                 if (length(list_of_models) > 2 && !is.null(final_result_matrix_msi_patient) && classes_are_the_same_for_each_model == TRUE && outcomes_are_the_same_for_each_model == TRUE) {
-                    ### Classification matrix
-                    classification_ensemble_matrix_msi <- ensemble_vote_classification(classification_matrix = final_result_matrix_msi_patient, class_list = model_list[[1]]$class_list, decision_method = decision_method_ensemble, vote_weights = vote_weights_ensemble, classification_probabilities_list = predicted_classes_probs_list, performance_parameter_list = model_performance_parameter_list, type_of_validation_for_performance_estimation = "cv")
-                    # Store the ensemble classification matrix in the final output list
-                    classification_ensemble_matrix_msi_all[[sample_name]] <- classification_ensemble_matrix_msi
-                    ### Molecular image of the classification
-                    # Generate the "predicted classes" vector from the ensemble classification matrix
-                    predicted_classes <- as.character(classification_ensemble_matrix_msi)
-                    names(predicted_classes) <- rownames(classification_ensemble_matrix_msi)
-                    # Define the class as number depending on the outcome
-                    outcome_and_class <- outcome_and_class_to_MS(class_list = model_list[[1]]$class_list, outcome_list = model_list[[1]]$outcome_list, class_vector = predicted_classes)
-                    # Replace the spectra intensities with the class number for plotting purposes
-                    class_as_number <- outcome_and_class$class_vector_as_numeric
-                    spectra_for_plotting <- sample_spectra
-                    if (is.null(names(spectra_for_plotting)) || is.null(names(class_as_number))) {
-                        for (s in 1:length(spectra_for_plotting)) {
-                            spectra_for_plotting[[s]]@intensity <- rep(class_as_number[s], length(spectra_for_plotting[[s]]@intensity))
+                    ##### Unweighted majority
+                    if ("unweighted majority" %in% decision_method_ensemble) {
+                        ### Classification matrix
+                        classification_ensemble_matrix_msi <- ensemble_vote_classification(classification_matrix = final_result_matrix_msi_patient, class_list = model_list[[1]]$class_list, weighted_decision_method = "unweighted majority", classification_probabilities_list = predicted_classes_probs_list, performance_parameter_list = model_performance_parameter_list, type_of_validation_for_performance_estimation = "cv")
+                        # Store the ensemble classification matrix in the final output list
+                        classification_ensemble_matrix_msi_all[[sample_name]][["unweighted majority"]] <- classification_ensemble_matrix_msi
+                        ### Molecular image of the classification
+                        # Generate the "predicted classes" vector from the ensemble classification matrix
+                        predicted_classes <- as.character(classification_ensemble_matrix_msi)
+                        names(predicted_classes) <- rownames(classification_ensemble_matrix_msi)
+                        # Define the class as number depending on the outcome
+                        outcome_and_class <- outcome_and_class_to_MS(class_list = model_list[[1]]$class_list, outcome_list = model_list[[1]]$outcome_list, class_vector = predicted_classes)
+                        # Replace the spectra intensities with the class number for plotting purposes
+                        class_as_number <- outcome_and_class$class_vector_as_numeric
+                        spectra_for_plotting <- sample_spectra
+                        if (is.null(names(spectra_for_plotting)) || is.null(names(class_as_number))) {
+                            for (s in 1:length(spectra_for_plotting)) {
+                                spectra_for_plotting[[s]]@intensity <- rep(class_as_number[s], length(spectra_for_plotting[[s]]@intensity))
+                            }
+                        } else {
+                            for (s in 1:length(spectra_for_plotting)) {
+                                spectra_for_plotting[[s]]@intensity <- rep(class_as_number[names(spectra_for_plotting)[s]], length(spectra_for_plotting[[s]]@intensity))
+                            }
                         }
+                        # Generate the MS images
+                        slices <- msiSlices(spectra_for_plotting, center = spectra_for_plotting[[1]]@mass[(length(spectra_for_plotting[[1]]@mass)/2)], tolerance = 1, adjust = TRUE, method = "median")
+                        plotMsiSlice(slices, legend = FALSE, scale = F)
+                        # Define the legend
+                        if ("legend" %in% plot_legends) {
+                            legend_text <- outcome_and_class$legend_text
+                            legend_fill <- outcome_and_class$legend_fill
+                            legend(x = "bottomright", legend = legend_text, fill = legend_fill, xjust = 0.5, yjust = 0.5)
+                        }
+                        if ("sample name" %in% plot_legends) {
+                            legend(x = "topright", legend = spectra_for_plotting[[1]]@metaData$file[1], xjust = 0.5, yjust = 0.5)
+                        }
+                        if ("plot name" %in% plot_legends) {
+                            legend(x = "topleft", legend = "Ensemble classifier", xjust = 0.5, yjust = 0.5)
+                        }
+                        # Store the plot into the list of images
+                        classification_ensemble_ms_image_list[[sample_name]][["unweighted majority"]] <- recordPlot()
                     } else {
-                        for (s in 1:length(spectra_for_plotting)) {
-                            spectra_for_plotting[[s]]@intensity <- rep(class_as_number[names(spectra_for_plotting)[s]], length(spectra_for_plotting[[s]]@intensity))
+                        classification_ensemble_matrix_msi_all[[sample_name]][["unweighted majority"]] <- NULL
+                        classification_ensemble_ms_image_list[[sample_name]][["unweighted majority"]] <- NULL
+                    }
+                    ##### Class assignment probabilities
+                    if ("class assignment probabilities" %in% decision_method_ensemble) {
+                        ### Classification matrix
+                        classification_ensemble_matrix_msi <- ensemble_vote_classification(classification_matrix = final_result_matrix_msi_patient, class_list = model_list[[1]]$class_list, weighted_decision_method = "class assignment probabilities", classification_probabilities_list = predicted_classes_probs_list, performance_parameter_list = model_performance_parameter_list, type_of_validation_for_performance_estimation = "cv")
+                        # Store the ensemble classification matrix in the final output list
+                        classification_ensemble_matrix_msi_all[[sample_name]][["class assignment probabilities"]] <- classification_ensemble_matrix_msi
+                        ### Molecular image of the classification
+                        # Generate the "predicted classes" vector from the ensemble classification matrix
+                        predicted_classes <- as.character(classification_ensemble_matrix_msi)
+                        names(predicted_classes) <- rownames(classification_ensemble_matrix_msi)
+                        # Define the class as number depending on the outcome
+                        outcome_and_class <- outcome_and_class_to_MS(class_list = model_list[[1]]$class_list, outcome_list = model_list[[1]]$outcome_list, class_vector = predicted_classes)
+                        # Replace the spectra intensities with the class number for plotting purposes
+                        class_as_number <- outcome_and_class$class_vector_as_numeric
+                        spectra_for_plotting <- sample_spectra
+                        if (is.null(names(spectra_for_plotting)) || is.null(names(class_as_number))) {
+                            for (s in 1:length(spectra_for_plotting)) {
+                                spectra_for_plotting[[s]]@intensity <- rep(class_as_number[s], length(spectra_for_plotting[[s]]@intensity))
+                            }
+                        } else {
+                            for (s in 1:length(spectra_for_plotting)) {
+                                spectra_for_plotting[[s]]@intensity <- rep(class_as_number[names(spectra_for_plotting)[s]], length(spectra_for_plotting[[s]]@intensity))
+                            }
                         }
+                        # Generate the MS images
+                        slices <- msiSlices(spectra_for_plotting, center = spectra_for_plotting[[1]]@mass[(length(spectra_for_plotting[[1]]@mass)/2)], tolerance = 1, adjust = TRUE, method = "median")
+                        plotMsiSlice(slices, legend = FALSE, scale = F)
+                        # Define the legend
+                        if ("legend" %in% plot_legends) {
+                            legend_text <- outcome_and_class$legend_text
+                            legend_fill <- outcome_and_class$legend_fill
+                            legend(x = "bottomright", legend = legend_text, fill = legend_fill, xjust = 0.5, yjust = 0.5)
+                        }
+                        if ("sample name" %in% plot_legends) {
+                            legend(x = "topright", legend = spectra_for_plotting[[1]]@metaData$file[1], xjust = 0.5, yjust = 0.5)
+                        }
+                        if ("plot name" %in% plot_legends) {
+                            legend(x = "topleft", legend = "Ensemble classifier", xjust = 0.5, yjust = 0.5)
+                        }
+                        # Store the plot into the list of images
+                        classification_ensemble_ms_image_list[[sample_name]][["class assignment probabilities"]] <- recordPlot()
+                    } else {
+                        classification_ensemble_matrix_msi_all[[sample_name]][["class assignment probabilities"]] <- NULL
+                        classification_ensemble_ms_image_list[[sample_name]][["class assignment probabilities"]] <- NULL
                     }
-                    # Generate the MS images
-                    slices <- msiSlices(spectra_for_plotting, center = spectra_for_plotting[[1]]@mass[(length(spectra_for_plotting[[1]]@mass)/2)], tolerance = 1, adjust = TRUE, method = "median")
-                    plotMsiSlice(slices, legend = FALSE, scale = F)
-                    # Define the legend
-                    if ("legend" %in% plot_legends) {
-                        legend_text <- outcome_and_class$legend_text
-                        legend_fill <- outcome_and_class$legend_fill
-                        legend(x = "bottomright", legend = legend_text, fill = legend_fill, xjust = 0.5, yjust = 0.5)
+                    ##### Class assignment probabilities
+                    if ("bayesian probabilities" %in% decision_method_ensemble) {
+                        ### Classification matrix
+                        classification_ensemble_matrix_msi <- ensemble_vote_classification(classification_matrix = final_result_matrix_msi_patient, class_list = model_list[[1]]$class_list, weighted_decision_method = "bayesian probabilities", classification_probabilities_list = predicted_classes_probs_list, performance_parameter_list = model_performance_parameter_list, type_of_validation_for_performance_estimation = "cv")
+                        # Store the ensemble classification matrix in the final output list
+                        classification_ensemble_matrix_msi_all[[sample_name]][["bayesian probabilities"]] <- classification_ensemble_matrix_msi
+                        ### Molecular image of the classification
+                        # Generate the "predicted classes" vector from the ensemble classification matrix
+                        predicted_classes <- as.character(classification_ensemble_matrix_msi)
+                        names(predicted_classes) <- rownames(classification_ensemble_matrix_msi)
+                        # Define the class as number depending on the outcome
+                        outcome_and_class <- outcome_and_class_to_MS(class_list = model_list[[1]]$class_list, outcome_list = model_list[[1]]$outcome_list, class_vector = predicted_classes)
+                        # Replace the spectra intensities with the class number for plotting purposes
+                        class_as_number <- outcome_and_class$class_vector_as_numeric
+                        spectra_for_plotting <- sample_spectra
+                        if (is.null(names(spectra_for_plotting)) || is.null(names(class_as_number))) {
+                            for (s in 1:length(spectra_for_plotting)) {
+                                spectra_for_plotting[[s]]@intensity <- rep(class_as_number[s], length(spectra_for_plotting[[s]]@intensity))
+                            }
+                        } else {
+                            for (s in 1:length(spectra_for_plotting)) {
+                                spectra_for_plotting[[s]]@intensity <- rep(class_as_number[names(spectra_for_plotting)[s]], length(spectra_for_plotting[[s]]@intensity))
+                            }
+                        }
+                        # Generate the MS images
+                        slices <- msiSlices(spectra_for_plotting, center = spectra_for_plotting[[1]]@mass[(length(spectra_for_plotting[[1]]@mass)/2)], tolerance = 1, adjust = TRUE, method = "median")
+                        plotMsiSlice(slices, legend = FALSE, scale = F)
+                        # Define the legend
+                        if ("legend" %in% plot_legends) {
+                            legend_text <- outcome_and_class$legend_text
+                            legend_fill <- outcome_and_class$legend_fill
+                            legend(x = "bottomright", legend = legend_text, fill = legend_fill, xjust = 0.5, yjust = 0.5)
+                        }
+                        if ("sample name" %in% plot_legends) {
+                            legend(x = "topright", legend = spectra_for_plotting[[1]]@metaData$file[1], xjust = 0.5, yjust = 0.5)
+                        }
+                        if ("plot name" %in% plot_legends) {
+                            legend(x = "topleft", legend = "Ensemble classifier", xjust = 0.5, yjust = 0.5)
+                        }
+                        # Store the plot into the list of images
+                        classification_ensemble_ms_image_list[[sample_name]][["bayesian probabilities"]] <- recordPlot()
+                    } else {
+                        classification_ensemble_matrix_msi_all[[sample_name]][["bayesian probabilities"]] <- NULL
+                        classification_ensemble_ms_image_list[[sample_name]][["bayesian probabilities"]] <- NULL
                     }
-                    if ("sample name" %in% plot_legends) {
-                        legend(x = "topright", legend = spectra_for_plotting[[1]]@metaData$file[1], xjust = 0.5, yjust = 0.5)
-                    }
-                    if ("plot name" %in% plot_legends) {
-                        legend(x = "topleft", legend = "Ensemble classifier", xjust = 0.5, yjust = 0.5)
-                    }
-                    # Store the plot into the list of images
-                    classification_ensemble_ms_image_list[[sample_name]] <- recordPlot()
                 } else {
                     classification_ensemble_matrix_msi_all[[sample_name]] <- NULL
                     classification_ensemble_ms_image_list[[sample_name]] <- NULL
@@ -4239,7 +4353,7 @@ functions_mass_spectrometry <- function() {
             if ("profile" %in% classification_mode) {
                 if (length(list_of_models) > 2 && !is.null(final_result_matrix_profile_patient) && classes_are_the_same_for_each_model == TRUE && outcomes_are_the_same_for_each_model == TRUE) {
                     ########## Ensemble results
-                    classification_ensemble_matrix_profile <- ensemble_vote_classification(classification_matrix = final_result_matrix_profile_patient, class_list = model_list[[1]]$class_list, decision_method = decision_method_ensemble, vote_weights = vote_weights_ensemble, classification_probabilities_list = predicted_classes_probs_list, performance_parameter_list = model_performance_parameter_list, type_of_validation_for_performance_estimation = "cv")
+                    classification_ensemble_matrix_profile <- ensemble_vote_classification(classification_matrix = final_result_matrix_profile_patient, class_list = model_list[[1]]$class_list, weighted_decision_method = decision_method_ensemble, classification_probabilities_list = predicted_classes_probs_list, performance_parameter_list = model_performance_parameter_list, type_of_validation_for_performance_estimation = "cv")
                     # Store the ensemble classification matrix in the final output list
                     if (is.null(classification_ensemble_matrix_profile_all)) {
                         classification_ensemble_matrix_profile_all <- classification_ensemble_matrix_profile
@@ -5257,7 +5371,7 @@ functions_mass_spectrometry <- function() {
         # Build the matrix with the common features
         if (length(common_features_list) > 0) {
             for (cf in 1:length(common_features_list)) {
-                if (startsWith(common_features_list[cf], "X")) {
+                if (base::startsWith(common_features_list[cf], "X")) {
                     common_features_list[cf] <- as.numeric(unlist(strsplit(common_features_list[cf], "X"))[2])
                 }
             }
@@ -5339,8 +5453,8 @@ functions_mass_spectrometry <- function() {
                 performance_parameter_vector[["specificity"]] <- true_negatives / (true_negatives + false_positives)
                 performance_parameter_vector[["TPR"]] <- performance_parameter_vector[["sensitivity"]]
                 performance_parameter_vector[["TNR"]] <- performance_parameter_vector[["specificity"]]
-                performance_parameter_vector[["FPR"]] <- false_positives / true_negatives + false_positives
-                performance_parameter_vector[["FNR"]] <- false_negatives / true_positives + false_negatives
+                performance_parameter_vector[["FPR"]] <- false_positives / (true_negatives + false_positives)
+                performance_parameter_vector[["FNR"]] <- false_negatives / (true_positives + false_negatives)
                 performance_parameter_vector[["accuracy"]] <- (true_positives + true_negatives) / (true_positives + true_negatives + false_positives + false_negatives)
                 performance_parameter_vector[["PPV"]] <- true_positives / (true_positives + false_positives)
                 performance_parameter_vector[["NPV"]] <- true_negatives / (true_negatives + false_negatives)
@@ -5810,8 +5924,8 @@ functions_mass_spectrometry <- function() {
     # Each sample gets compared with all the entries in the database, simultaneously.
     spectral_typer_score_hierarchical_distance <<- function(spectra_database, spectra_test, class_list_library = NULL, peaks_filtering_percentage_threshold = 5, low_intensity_percentage_threshold = 0, low_intensity_threshold_method = "element-wise", tof_mode = "linear", spectra_path_output = TRUE, score_only = TRUE, spectra_format = "fid", normalize_distances = TRUE, normalization_method = "sum", hierarchical_distance_method = "euclidean", tolerance_ppm = NULL, allow_parallelization = FALSE, peak_picking_mode = "all", signals_to_take = 20, peak_picking_SNR = 3, peak_picking_algorithm = "SuperSmoother", peak_deisotoping = FALSE, peak_enveloping = FALSE, spectral_alignment_algorithm = NULL, spectral_alignment_reference = NULL) {
         # Load the required libraries
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         require(stats)
         require(ggplot2)
         require(ggdendro)
@@ -5999,8 +6113,8 @@ functions_mass_spectrometry <- function() {
     # Each sample gets compared with each entry in the database, separately.
     # Parallel implemented.
     spectral_typer_score_correlation_matrix <<- function(spectra_database, spectra_test, filepath_database, filepath_test, class_list_library = NULL, peaks_filtering_percentage_threshold = 5, low_intensity_percentage_threshold = 0, low_intensity_threshold_method = "element-wise", tof_mode = "linear", correlation_method = "spearman", intensity_correction_coefficient = 1, spectra_format = "fid", spectra_path_output = TRUE, score_only = FALSE, allow_parallelization = FALSE, score_threshold_values = c(1.7, 2), tolerance_ppm = NULL, peak_picking_mode = "all", signals_to_take = 20, peak_picking_SNR = 3, peak_picking_algorithm = "SuperSmoother", peak_deisotoping = FALSE, peak_enveloping = FALSE, spectral_alignment_algorithm = NULL, spectral_alignment_reference = NULL) {
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         require(corrplot)
         require(weights)
         require(stats)
@@ -6153,10 +6267,13 @@ functions_mass_spectrometry <- function() {
                 # For each peaklist in the Library
                 if (length(peaks_sample@mass) > 0 && length(peaks_database_temp@mass) > 0) {
                     matching_signals_number <- length(intersect(peaks_sample@mass, peaks_database_temp@mass))
+                    matching_signals <- intersect(peaks_sample@mass, peaks_database_temp@mass)
                 } else if (length(peaks_sample@mass) == 0 || length(peaks_database_temp@mass) == 0) {
                     matching_signals_number <- 0
+                    matching_signals <- numeric()
                 } else {
                     matching_signals_number <- 0
+                    matching_signals <- numeric()
                 }
                 # Append this row to the global matrix
                 matching_signals_matrix[1,db] <- matching_signals_number
@@ -6182,8 +6299,9 @@ functions_mass_spectrometry <- function() {
                 # Intensity matrix
                 intensity_matrix_global <- intensityMatrix(peaks_all, spectra_all)
                 # Keep only the matching signals
-                #columns_to_keep <- as.character(matching_signals)
-                #intensity_matrix_global <- intensity_matrix_global[,columns_to_keep]
+                if (length(matching_signals) > 0) {
+                    intensity_matrix_global <- as.matrix(cbind(intensity_matrix_global[, as.character(matching_signals)]))
+                }
                 # Weighted correlation between samples (library + test samples) (samples must be as columns and features as test) - With weights
                 if (intensity_correction_coefficient != 0 && intensity_correction_coefficient != 1 && correlation_method == "pearson") {
                     # Compute the vector of weights
@@ -6192,23 +6310,28 @@ functions_mass_spectrometry <- function() {
                     intensity_correlation_sample <- as.matrix(intensity_matrix_global[(database_size + 1):nrow(intensity_matrix_global), 1:database_size])
                 } else if (intensity_correction_coefficient == 1 || (intensity_correction_coefficient != 0 && intensity_correction_coefficient != 1 && correlation_method != "pearson")) {
                     t_intensity_matrix_global <- t(intensity_matrix_global)
-                    correlation_sample <- cor.test(t_intensity_matrix_global[,1], t_intensity_matrix_global[,2], method = correlation_method)
-                    intensity_correlation_sample <- correlation_sample$estimate
-                    # pvalue
-                    pvalue <- correlation_sample$p.value
-                    pvalue_replacement_function <- function(x, number_of_digits) {
-                        if (is.na(x)) {
-                            x <- "Not available"
-                        } else if (x < 0.00001) {
-                            x <- "< 0.00001"
-                        } else {
-                            x <- as.character(round(x, digits = number_of_digits))
+                    if (ncol(t_intensity_matrix_global) >= 3) {
+                        correlation_sample <- cor.test(t_intensity_matrix_global[,1], t_intensity_matrix_global[,2], method = correlation_method)
+                        intensity_correlation_sample <- correlation_sample$estimate
+                        # pvalue
+                        pvalue <- correlation_sample$p.value
+                        pvalue_replacement_function <- function(x, number_of_digits) {
+                            if (is.na(x)) {
+                                x <- "Not available"
+                            } else if (x < 0.00001) {
+                                x <- "< 0.00001"
+                            } else {
+                                x <- as.character(round(x, digits = number_of_digits))
+                            }
+                            return(x)
                         }
-                        return(x)
+                        pvalue <- pvalue_replacement_function(pvalue, number_of_digits = 6)
+                        # Append this row to the global matrix
+                        pvalue_matrix[1, db] <- pvalue
+                    } else {
+                        intensity_correlation_sample <- 1
+                        pvalue_matrix[1, db] <- 0
                     }
-                    pvalue <- pvalue_replacement_function(pvalue, number_of_digits = 6)
-                    # Append this row to the global matrix
-                    pvalue_matrix[1, db] <- pvalue
                 } else if (intensity_correction_coefficient == 0) {
                     intensity_correlation_sample <- 1
                 }
@@ -6395,9 +6518,9 @@ functions_mass_spectrometry <- function() {
     # Parallel implemented.
     spectral_typer_score_signal_intensity <<- function(spectra_database, spectra_test, class_list_library = NULL, database_spectral_variability_list = NULL, test_spectral_variability_list = NULL, signal_intensity_evaluation = c("fixed percentage", "peak-wise adjusted percentage", "average coefficient of variation"), peaks_filtering_percentage_threshold = 5, low_intensity_percentage_threshold = 0, low_intensity_threshold_method = "element-wise", tof_mode = "linear", intensity_tolerance_percent_threshold = 50, spectra_format = "fid", spectra_path_output = TRUE, score_only = TRUE, allow_parallelization = FALSE, score_threshold_values = c(1.7, 2), tolerance_ppm = NULL, peak_picking_mode = "all", signals_to_take = 20, peak_picking_SNR = 3, peak_picking_algorithm = "SuperSmoother", peak_deisotoping = FALSE, peak_enveloping = FALSE, spectral_alignment_algorithm = NULL, spectral_alignment_reference = NULL) {
         # Load the required libraries
+        require(XML)
         require(MALDIquant)
         require(parallel)
-        require(XML)
         ### Fix the score intensity threshold values
         if (!is.numeric(score_threshold_values) || (is.numeric(score_threshold_values) && length(score_threshold_values) != 2)) {
             score_threshold_values <- c(1.7, 2)
@@ -6607,7 +6730,7 @@ functions_mass_spectrometry <- function() {
                     }
                     # Append this row to the global matrix
                     intensity_matching_matrix[1, db] <- intensity_matching_sample
-                } else if (signal_intensity_evaluation == "peak-wise adjusted percentage") {
+                } else if (signal_intensity_evaluation == "peak-wise adjusted percentage" && (!is.null(x[["database_spectral_variability_list"]]) && !is.null(x[["test_spectral_variability_list"]])) || (length(x[["database_spectral_variability_list"]]) > 0 && length(x[["test_spectral_variability_list"]]) > 0)) {
                     ########### PEAK-WISE ADJUSTED INTENSITY PERCENTAGE
                     # Create a counter, symmetrical to the database Peaklist
                     if (length(peaks_sample@mass) > 0 && length(peaks_database_temp@mass) > 0) {
@@ -6664,7 +6787,7 @@ functions_mass_spectrometry <- function() {
                     }
                     # Append this row to the global matrix
                     intensity_matching_matrix[1, db] <- intensity_matching_sample
-                } else if (signal_intensity_evaluation == "average coefficient of variation") {
+                } else if (signal_intensity_evaluation == "average coefficient of variation" && (!is.null(x[["database_spectral_variability_list"]]) && !is.null(x[["test_spectral_variability_list"]])) || (length(x[["database_spectral_variability_list"]]) > 0 && length(x[["test_spectral_variability_list"]]) > 0)) {
                     ########### AVERAGE COEFFICIENT OF VARIATION
                     # Create a counter, symmetrical to the database Peaklist
                     if (length(peaks_sample@mass) > 0 && length(peaks_database_temp@mass) > 0) {
@@ -6859,8 +6982,8 @@ functions_mass_spectrometry <- function() {
                 score_threshold_values[2] <- 3
             }
         }
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         require(stats)
         require(parallel)
         # Rename the trim function
@@ -7327,8 +7450,8 @@ functions_mass_spectrometry <- function() {
     # This function is suited for aligning the spectral features (of an unknown dataset) with the model features.
     generate_custom_intensity_matrix <<- function(spectra, custom_feature_vector = NULL, tof_mode = "linear", preprocessing_parameters = list(mass_range = c(800,3000), transformation_algorithm = NULL, smoothing_algorithm = NULL, smoothing_strength = "medium", baseline_subtraction_algorithm = "SNIP", baseline_subtraction_algorithm_parameter = 100, normalization_algorithm = "TIC", normalization_mass_range = NULL, preprocess_spectra_in_packages_of = 0, spectral_alignment_algorithm = NULL), peak_picking_algorithm = "SuperSmoother", peak_picking_SNR = 5, peak_filtering_frequency_threshold_percent = 5, low_intensity_peak_removal_threshold_percent = 0, low_intensity_peak_removal_threshold_method = "element-wise", allow_parallelization = FALSE, deisotope_peaklist = FALSE, tolerance_ppm = NULL) {
         ### Install the required packages
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         # Rename the trim function
         trim_spectra <- get(x = "trim", pos = "package:MALDIquant")
         ### Define the tolerance
@@ -7350,7 +7473,7 @@ functions_mass_spectrometry <- function() {
             # Check if there are X at the beginning of the feature numbers before converting into numbers
             for (f in 1:length(custom_feature_vector)) {
                 # Remove the X
-                if (startsWith(custom_feature_vector[f], "X")) {
+                if (base::startsWith(custom_feature_vector[f], "X")) {
                     name_splitted <- unlist(strsplit(custom_feature_vector[f],""))
                     feature_def <- name_splitted [2]
                     for (i in 3:length(name_splitted)) {
@@ -7513,8 +7636,8 @@ functions_mass_spectrometry <- function() {
     # If space is selected, the spectral list is rearranged along the widest dimension: for example, if X is the widest dimension, the spectra are rearranged as X1,Y1 X2,Y1 X3,Y1 and so on... If the spectral list does not contain spatial coordinates (it is not an imaging dataset), nothing is performedin terms of space.
     rearrange_spectral_dataset <<- function(spectra, rearranging_method = c("space","random"), seed = NULL) {
         ##### Install and load the required packages
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         ########## Do everything only if it is a list of spectra
         if (isMassSpectrumList(spectra)) {
             #################### SPACE
@@ -7609,8 +7732,8 @@ functions_mass_spectrometry <- function() {
     # The function takes a list of spectra and partitions it in a certain number of subsets (defined by the user) on spatial, random or hierarchical basis. It returns a list of sub-lists of spectra.
     partition_spectral_dataset <<- function(spectra, partitioning_method = c("space","random", "hca"), number_of_partitions = 3, seed = NULL, tof_mode = "reflectron") {
         ##### Install and load the required packages
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         ########## Do everything only if it is a list of spectra
         if (isMassSpectrumList(spectra)) {
             #################### SPACE
@@ -7811,7 +7934,7 @@ functions_mass_spectrometry <- function() {
             feature_vector <- model_list[[md]]$features_model
             # Remove the X from the features
             for (f in 1:length(feature_vector)) {
-                if (startsWith(feature_vector[f], "X")) {
+                if (base::startsWith(feature_vector[f], "X")) {
                     name_splitted <- unlist(strsplit(feature_vector[f],""))
                     feature_def <- name_splitted [2]
                     for (i in 3:length(name_splitted)) {
@@ -7895,7 +8018,7 @@ functions_mass_spectrometry <- function() {
         ### Remove the X from the features
         if (length(common_features_vector) > 0) {
             for (f in 1:length(common_features_vector)) {
-                if (startsWith(common_features_vector[f], "X")) {
+                if (base::startsWith(common_features_vector[f], "X")) {
                     name_splitted <- unlist(strsplit(common_features_vector[f],""))
                     feature_def <- name_splitted[2]
                     for (i in 3:length(name_splitted)) {
@@ -7990,8 +8113,8 @@ functions_mass_spectrometry <- function() {
     # The function takes an adjacency matrix as input, converts it into a graph (using the 'igraph' package) and runs the genetic algorithm on the chromosome population generated by the graph nodes. The aim of the genetic algorithm is to identify and isolate a set of highly correlated observations (clique) from the rest of the dataset (independent set) by performing vertex and triangle mutations (free low-grade vertices and bind high-grade vertices) and selecting (fitness function) the population with a minimal change compared to the original, in such a way that the maximum amount of information is preserved.
     genetic_algorithm_graph <<- function(input_adjacency_matrix, graph_type = "Preferential", vertex_mutation = TRUE, triangle_mutation = TRUE, allow_parallelization = FALSE, number_of_high_degree_vertices_for_subgraph = 0, vertices_not_in_induced_subgraph = c("independent", "reassigned"), vertex_independency_threshold = 200, iterations_with_no_change = 5, max_GA_generations = 10, seed = 12345) {
         ##### Install and load the required packages
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         require(parallel)
         require(igraph)
         require(GA)
@@ -8236,8 +8359,8 @@ functions_mass_spectrometry <- function() {
     # The function takes the result of the genetic algorithm optimization (the genetic model object) and the list of spectra used to generate the adjacency matrix for the function 'genetic_algorithm_graph', it extracts the final chromosome (generated after the optimization) and it mirrors it onto the list of spectra, so that the output is a list of spectra belonging to the clique and a list of spectra belonging to the independent set. In addition, a list of spectra for plotting purposes is returned.
     from_GA_to_MS <<- function(final_chromosome_GA, spectra, spectra_format = "imzML") {
         ##### Install and load the required packages
-        require(MALDIquant)
         require(XML)
+        require(MALDIquant)
         require(parallel)
         require(igraph)
         require(GA)
@@ -8314,9 +8437,9 @@ functions_mass_spectrometry <- function() {
     # It returns a NULL value if the segmentation is not possible due to incompatibilities between the features in the dataset and the ones provided by the model.
     graph_MSI_segmentation <<- function(filepath_imzml, preprocessing_parameters = list(mass_range = c(800,3000), transformation_algorithm = NULL, smoothing_algorithm = NULL, smoothing_strength = "medium", baseline_subtraction_algorithm = "SNIP", baseline_subtraction_algorithm_parameter = 200, normalization_algorithm = "TIC", normalization_mass_range = NULL, process_spectra_in_packages_of = 0, spectral_alignment_algorithm = NULL), allow_parallelization = FALSE, peak_picking_algorithm = "SuperSmoother", deisotope_peaklist = FALSE, SNR = 5, tof_mode = "reflectron", peak_filtering_frequency_threshold_percent = 5, low_intensity_peak_removal_threshold_percent = 0, low_intensity_peak_removal_threshold_method = "element-wise", custom_feature_vector = NULL, correlation_method_for_adjacency_matrix = "pearson", correlation_threshold_for_adjacency_matrix = 0.90, pvalue_threshold_for_adjacency_matrix = 0.05, number_of_high_degree_vertices_for_subgraph = 0, vertices_not_in_induced_subgraph = c("independent", "reassigned"), max_GA_generations = 10, iterations_with_no_change = 5, plot_figures = TRUE, plot_graphs = TRUE, plot_legends = c("sample name", "legend", "plot name"), number_of_spectra_partitions = 1, partitioning_method = "space", seed = 12345, spectra_format = "imzML") {
         # Install and load the required packages
+        require(XML)
         require(MALDIquantForeign)
         require(MALDIquant)
-        require(XML)
         require(parallel)
         require(caret)
         require(pls)
@@ -8563,6 +8686,7 @@ functions_mass_spectrometry <- function() {
 
 
 
+
 ####################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
 
 
@@ -8603,7 +8727,7 @@ ensemble_ms_tuner <- function() {
     # In the debugging phase, run the whole code block within the {}, like as if the script was directly sourced from the file.
     
     ### Program version (Specified by the program writer!!!!)
-    R_script_version <- "2017.06.16.0"
+    R_script_version <- "2017.06.21.0"
     ### Force update (in case something goes wrong after an update, when checking for updates and reading the variable force_update, the script can automatically download the latest working version, even if the rest of the script is corrupted, because it is the first thing that reads)
     force_update <- FALSE
     ### GitHub URL where the R file is
@@ -8844,9 +8968,9 @@ ensemble_ms_tuner <- function() {
                 outcome_list <- unlist(strsplit(outcome_list_input, ",", fixed = TRUE))
                 # Remove the blank spaces around the text
                 for (ou in 1:length(outcome_list)) {
-                    if (startsWith(outcome_list[ou], " ")) {
+                    if (base::startsWith(outcome_list[ou], " ")) {
                         outcome_list[ou] <- unlist(strsplit(outcome_list[ou], ""))[2]
-                    } else if (endsWith(outcome_list[ou], " ")) {
+                    } else if (base::endsWith(outcome_list[ou], " ")) {
                         outcome_list[ou] <- unlist(strsplit(outcome_list[ou], ""))[1]
                     }
                 }
