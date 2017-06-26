@@ -4627,7 +4627,7 @@ functions_mass_spectrometry <- function() {
             # For each feature, calculate the impact on the classification capability
             model_control <- trainControl(method = "repeatedcv", number = k_fold_cv_control, repeats = cv_repeats_control)
             # Compute a model based upon the discriminant attribute
-            feature_model <- train(x = training_set[,!(names(training_set) %in% non_features)], y = training_set[,discriminant_attribute], method = "pls", preProcess = "scale", trControl = model_control)
+            feature_model <- train(x = training_set[,!(names(training_set) %in% non_features)], y = as.factor(training_set[,discriminant_attribute]), method = "pls", preProcess = "scale", trControl = model_control)
             # Estimate variable importance
             feature_importance <- varImp(feature_model, scale = FALSE)
             # Isolate the most important features (rank them according to their importance first!)
@@ -4763,7 +4763,7 @@ functions_mass_spectrometry <- function() {
         ### Define the control function of the RFE
         rfe_ctrl <- rfeControl(functions = caretFuncs, method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, saveDetails = TRUE, allowParallel = allow_parallelization, rerank = feature_reranking, seeds = NULL)
         ### Run the RFE (model tuning during feature selection or after)
-        rfe_model <- rfe(x = peaklist[, !(names(peaklist) %in% non_features)], y = peaklist[,discriminant_attribute], sizes = subset_sizes, rfeControl = rfe_ctrl, method = selection_method, metric = selection_metric, preProcess = preprocessing)
+        rfe_model <- rfe(x = peaklist[, !(names(peaklist) %in% non_features)], y = as.factor(peaklist[,discriminant_attribute]), sizes = subset_sizes, rfeControl = rfe_ctrl, method = selection_method, metric = selection_metric, preProcess = preprocessing)
         # Extract the model
         fs_model <- rfe_model$fit$finalModel
         # Variable importance
@@ -4895,6 +4895,7 @@ functions_mass_spectrometry <- function() {
             allow_parallelization <- TRUE
             ### PARALLEL BACKEND
             require(parallel)
+            require(foreach)
             # Detect the number of cores
             cpu_thread_number <- detectCores(logical = TRUE)
             if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
@@ -4936,7 +4937,7 @@ functions_mass_spectrometry <- function() {
         ### Model tuning is performed during feature selection (best choice)
         if (!is.null(model_tuning) && model_tuning == "embedded" && is.list(model_tune_grid)) {
             # Run the RFE
-            rfe_model <- rfe(x = training_set[, !(names(training_set) %in% non_features)], y = training_set[,discriminant_attribute], sizes = subset_sizes, rfeControl = rfe_ctrl, trControl = train_ctrl, method = selection_method, metric = selection_metric, preProcess = preprocessing, tuneGrid = expand.grid(model_tune_grid))
+            rfe_model <- rfe(x = training_set[, !(names(training_set) %in% non_features)], y = as.factor(training_set[,discriminant_attribute]), sizes = subset_sizes, rfeControl = rfe_ctrl, trControl = train_ctrl, method = selection_method, metric = selection_metric, preProcess = preprocessing, tuneGrid = expand.grid(model_tune_grid))
             # Model performances
             if (selection_metric == "kappa" || selection_metric == "Kappa") {
                 fs_model_performance <- as.numeric(max(rfe_model$fit$results$Kappa, na.rm = TRUE))
@@ -4948,7 +4949,7 @@ functions_mass_spectrometry <- function() {
         } else if (is.null(model_tuning) || model_tuning == "after" || (model_tuning == "no" || model_tuning == "none")) {
             ### Tuning will be performed afterwards with only the features selected by RFE: now, only a small tuning is performed
             # Run the RFE
-            rfe_model <- rfe(x = training_set[, !(names(training_set) %in% non_features)], y = training_set[,discriminant_attribute], sizes = subset_sizes, rfeControl = rfe_ctrl, trControl = train_ctrl, method = selection_method, metric = selection_metric, preProcess = preprocessing)
+            rfe_model <- rfe(x = training_set[, !(names(training_set) %in% non_features)], y = as.factor(training_set[,discriminant_attribute]), sizes = subset_sizes, rfeControl = rfe_ctrl, trControl = train_ctrl, method = selection_method, metric = selection_metric, preProcess = preprocessing)
             # Model performances
             if (selection_metric == "kappa" || selection_metric == "Kappa") {
                 fs_model_performance <- as.numeric(max(rfe_model$fit$results$Kappa, na.rm = TRUE))
@@ -5013,7 +5014,7 @@ functions_mass_spectrometry <- function() {
             # Define the control function
             train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL, classProbs = TRUE)
             # Define the model tuned
-            fs_model_tuning <- train(x = training_set_feature_selection[, !(names(training_set_feature_selection) %in% non_features)], y = training_set_feature_selection[, discriminant_attribute], method = selection_method, preProcess = preprocessing, tuneGrid = expand.grid(model_tune_grid), trControl = train_ctrl, metric = selection_metric)
+            fs_model_tuning <- train(x = training_set_feature_selection[, !(names(training_set_feature_selection) %in% non_features)], y = as.factor(training_set_feature_selection[, discriminant_attribute]), method = selection_method, preProcess = preprocessing, tuneGrid = expand.grid(model_tune_grid), trControl = train_ctrl, metric = selection_metric)
             # Plots
             if (generate_plots == TRUE) {
                 model_tuning_graphics <- NULL
@@ -5628,9 +5629,9 @@ functions_mass_spectrometry <- function() {
         train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL)
         ### Define the model tuned
         if (!is.null(model_tune_grid) || (is.list(model_tune_grid) && length(model_tune_grid) > 0)) {
-            fs_model <- train(x = training_set_feature_selection[, !(names(training_set_feature_selection) %in% non_features)], y = training_set_feature_selection[, discriminant_attribute], method = selection_method, preProcess = preprocessing, tuneGrid = expand.grid(model_tune_grid), trControl = train_ctrl, metric = selection_metric)
+            fs_model <- train(x = training_set_feature_selection[, !(names(training_set_feature_selection) %in% non_features)], y = as.factor(training_set_feature_selection[, discriminant_attribute]), method = selection_method, preProcess = preprocessing, tuneGrid = expand.grid(model_tune_grid), trControl = train_ctrl, metric = selection_metric)
         } else {
-            fs_model <- train(x = training_set_feature_selection[, !(names(training_set_feature_selection) %in% non_features)], y = training_set_feature_selection[, discriminant_attribute], method = selection_method, preProcess = preprocessing, trControl = train_ctrl, metric = selection_metric)
+            fs_model <- train(x = training_set_feature_selection[, !(names(training_set_feature_selection) %in% non_features)], y = as.factor(training_set_feature_selection[, discriminant_attribute]), method = selection_method, preProcess = preprocessing, trControl = train_ctrl, metric = selection_metric)
         }
         ### Model performances
         if (selection_metric == "kappa" || selection_metric == "Kappa") {
@@ -8780,6 +8781,7 @@ functions_mass_spectrometry <- function() {
 
 
 
+
 ####################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
 
 
@@ -8820,7 +8822,7 @@ ensemble_ms_tuner <- function() {
     # In the debugging phase, run the whole code block within the {}, like as if the script was directly sourced from the file.
     
     ### Program version (Specified by the program writer!!!!)
-    R_script_version <- "2017.06.26.0"
+    R_script_version <- "2017.06.26.1"
     ### Force update (in case something goes wrong after an update, when checking for updates and reading the variable force_update, the script can automatically download the latest working version, even if the rest of the script is corrupted, because it is the first thing that reads)
     force_update <- FALSE
     ### GitHub URL where the R file is
@@ -9193,8 +9195,8 @@ ensemble_ms_tuner <- function() {
             ### Put all the import block under the try() statement, so that if there are blocking errors (such as no files), the spectra variable remains NULL.
             try({
                 peaklist <- read.csv(filepath_import, header = TRUE, sep = ",")
-                ## Rownames
-                #try({rownames(peaklist) <- make.names(peaklist$Sample, unique = TRUE)}, silent = TRUE)
+                ## Rownames (can lead the RFE to crash!)
+                try({rownames(peaklist) <- make.names(peaklist$Sample, unique = TRUE)}, silent = TRUE)
                 ## Data type
                 try({peaklist$Sample <- as.character(peaklist$Sample)}, silent = TRUE)
                 try({
@@ -9867,3 +9869,4 @@ functions_mass_spectrometry()
 
 ### Run the function
 ensemble_ms_tuner()
+
