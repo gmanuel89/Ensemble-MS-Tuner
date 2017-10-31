@@ -4945,10 +4945,10 @@ functions_mass_spectrometry <- function() {
       rfe_model <- rfe(x = training_set[, !(names(training_set) %in% non_features)], y = as.factor(training_set[,discriminant_attribute]), sizes = subset_sizes, rfeControl = rfe_ctrl, trControl = train_ctrl, method = selection_method, metric = selection_metric, preProcess = preprocessing)
     }
     ### Model performances: two classes (ROC)
-    if (length(levels(as.factor(training_set[,discriminant_attribute]))) == 2) {
-      fs_model_performance <- as.numeric(max(rfe_model$fit$results$ROC, na.rm = TRUE))
-      names(fs_model_performance) <- "ROC AUC"
-    } else if (length(levels(as.factor(training_set[,discriminant_attribute]))) > 2) {
+    #if (length(levels(as.factor(training_set[,discriminant_attribute]))) == 2) {
+      #fs_model_performance <- as.numeric(max(rfe_model$fit$results$ROC, na.rm = TRUE))
+      #names(fs_model_performance) <- "ROC AUC"
+    #} else if (length(levels(as.factor(training_set[,discriminant_attribute]))) > 2) {
       ### Model performances: multi-classes (Accuracy or Kappa)
       if (selection_metric == "kappa" || selection_metric == "Kappa") {
         fs_model_performance <- as.numeric(max(rfe_model$fit$results$Kappa, na.rm = TRUE))
@@ -4957,7 +4957,7 @@ functions_mass_spectrometry <- function() {
         fs_model_performance <- as.numeric(max(rfe_model$fit$results$Accuracy, na.rm = TRUE))
         names(fs_model_performance) <- "Accuracy"
       }
-    }
+    #}
     # Extract the model
     fs_model <- rfe_model$fit
     # Extract the model performance parameters
@@ -5011,11 +5011,12 @@ functions_mass_spectrometry <- function() {
         set.seed(seed)
       }
       # Define the control function
-      if (length(levels(as.factor(training_set[,discriminant_attribute]))) == 2) {
-        train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL, classProbs = TRUE, summaryFunction = twoClassSummary)
-      } else if (length(levels(as.factor(training_set[,discriminant_attribute]))) > 2) {
-        train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL, classProbs = TRUE, summaryFunction = multiClassSummary)
-      }
+      #if (length(levels(as.factor(training_set[,discriminant_attribute]))) == 2) {
+        #train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL, classProbs = TRUE, summaryFunction = twoClassSummary)
+      #} else if (length(levels(as.factor(training_set[,discriminant_attribute]))) > 2) {
+        #train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL, classProbs = TRUE, summaryFunction = multiClassSummary)
+      #}
+      train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL, classProbs = TRUE)
       # Define the model tuned
       fs_model_tuning <- train(x = training_set_feature_selection[, !(names(training_set_feature_selection) %in% non_features)], y = as.factor(training_set_feature_selection[, discriminant_attribute]), method = selection_method, preProcess = preprocessing, tuneGrid = expand.grid(model_tune_grid), trControl = train_ctrl, metric = selection_metric)
       # Plots
@@ -5028,10 +5029,10 @@ functions_mass_spectrometry <- function() {
         model_tuning_graphics <- NULL
       }
       ### Model performances: two classes (ROC)
-      if (length(levels(as.factor(training_set[,discriminant_attribute]))) == 2) {
-        fs_model_performance_tuning <- as.numeric(max(fs_model_tuning$results$ROC, na.rm = TRUE))
-        names(fs_model_performance_tuning) <- "ROC AUC"
-      } else if (length(levels(as.factor(training_set[,discriminant_attribute]))) > 2) {
+      #if (length(levels(as.factor(training_set[,discriminant_attribute]))) == 2) {
+        #fs_model_performance_tuning <- as.numeric(max(fs_model_tuning$results$ROC, na.rm = TRUE))
+        #names(fs_model_performance_tuning) <- "ROC AUC"
+      #} else if (length(levels(as.factor(training_set[,discriminant_attribute]))) > 2) {
         ### Model performances: multi-classes (Accuracy or Kappa)
         if (selection_metric == "kappa" || selection_metric == "Kappa") {
           fs_model_performance_tuning <- as.numeric(max(fs_model_tuning$results$Kappa, na.rm = TRUE))
@@ -5040,7 +5041,7 @@ functions_mass_spectrometry <- function() {
           fs_model_performance_tuning <- as.numeric(max(fs_model_tuning$results$Accuracy, na.rm = TRUE))
           names(fs_model_performance_tuning) <- "Accuracy"
         }
-      }
+      #}
       ## Keep the model and the performance values only if the tuning yields more performances that just after the RFE
       if (fs_model_performance_tuning > fs_model_performance) {
         fs_model_performance <- fs_model_performance_tuning
@@ -8811,6 +8812,7 @@ functions_mass_spectrometry <- function() {
 
 
 
+
 ####################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
 
 
@@ -8851,7 +8853,7 @@ ensemble_ms_tuner <- function() {
   # In the debugging phase, run the whole code block within the {}, like as if the script was directly sourced from the file.
   
   ### Program version (Specified by the program writer!!!!)
-  R_script_version <- "2017.10.31.1"
+  R_script_version <- "2017.10.31.2"
   ### Force update (in case something goes wrong after an update, when checking for updates and reading the variable force_update, the script can automatically download the latest working version, even if the rest of the script is corrupted, because it is the first thing that reads)
   force_update <- FALSE
   ### GitHub URL where the R file is
@@ -9917,4 +9919,5 @@ functions_mass_spectrometry()
 
 ### Run the function
 ensemble_ms_tuner()
+
 
