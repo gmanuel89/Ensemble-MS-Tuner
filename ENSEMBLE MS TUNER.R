@@ -5,7 +5,7 @@ rm(list = ls())
 
 functions_mass_spectrometry <- function() {
   
-  ################## FUNCTIONS - MASS SPECTROMETRY 2017.11.09 ################
+  ################## FUNCTIONS - MASS SPECTROMETRY 2017.11.10 ################
   # Each function is assigned with <<- instead of <-, so when called by the huge functions_mass_spectrometry() function they go in the global environment, like as if the script was directly sourced from the file.
   
   
@@ -792,12 +792,12 @@ functions_mass_spectrometry <- function() {
           ### MULTICORE
           if ((is.logical(allow_parallelization) && allow_parallelization == TRUE) || (is.character(allow_parallelization) && allow_parallelization == "lapply")) {
             # Detect the number of cores
-            cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+            cpu_thread_number <- detectCores(logical = TRUE)
             if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-              #cpu_thread_number <- cpu_thread_number / 2
+              cpu_thread_number <- cpu_thread_number / 2
               peaks_filtered <- mclapply(peaks, FUN = function (peaks) intensity_filtering_subfunction_element(peaks, low_intensity_peak_removal_threshold_percent), mc.cores = cpu_thread_number)
             } else if (Sys.info()[1] == "Windows") {
-              #cpu_thread_number <- cpu_thread_number - 1
+              cpu_thread_number <- cpu_thread_number - 1
               # Make the CPU cluster for parallelisation
               cl <- makeCluster(cpu_thread_number)
               # Make the cluster use the custom functions and the package functions along with their parameters
@@ -814,16 +814,16 @@ functions_mass_spectrometry <- function() {
             ### PARALLEL BACKEND
             require(parallel)
             # Detect the number of cores
-            cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+            cpu_thread_number <- detectCores(logical = TRUE)
             if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-              #cpu_thread_number <- cpu_thread_number / 2
+              cpu_thread_number <- cpu_thread_number / 2
               #require(doMC)
               require(doParallel)
               # Register the foreach backend
               registerDoParallel(cpu_thread_number)
               #registerDoMC(cores = cpu_thread_number)
             } else if (Sys.info()[1] == "Windows") {
-              #cpu_thread_number <- cpu_thread_number / 2
+              cpu_thread_number <- cpu_thread_number / 2
               require(doParallel)
               # Register the foreach backend
               cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -904,12 +904,12 @@ functions_mass_spectrometry <- function() {
           ### MULTICORE
           if ((is.logical(allow_parallelization) && allow_parallelization == TRUE) || (is.character(allow_parallelization) && allow_parallelization == "lapply")) {
             # Detect the number of cores
-            cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+            cpu_thread_number <- detectCores(logical = TRUE)
             if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-              #cpu_thread_number <- cpu_thread_number / 2
+              cpu_thread_number <- cpu_thread_number / 2
               peaks_filtered <- mclapply(peaks, FUN = function(peaks) intensity_filtering_subfunction_whole(peaks, low_intensity_peak_removal_threshold_percent, highest_intensity), mc.cores = cpu_thread_number)
             } else if (Sys.info()[1] == "Windows") {
-              #cpu_thread_number <- cpu_thread_number - 1
+              cpu_thread_number <- cpu_thread_number - 1
               # Make the CPU cluster for parallelisation
               cl <- makeCluster(cpu_thread_number)
               # Make the cluster use the custom functions and the package functions along with their parameters
@@ -926,16 +926,16 @@ functions_mass_spectrometry <- function() {
             ### PARALLEL BACKEND
             require(parallel)
             # Detect the number of cores
-            cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+            cpu_thread_number <- detectCores(logical = TRUE)
             if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-              #cpu_thread_number <- cpu_thread_number / 2
+              cpu_thread_number <- cpu_thread_number / 2
               #require(doMC)
               require(doParallel)
               # Register the foreach backend
               registerDoParallel(cpu_thread_number)
               #registerDoMC(cores = cpu_thread_number)
             } else if (Sys.info()[1] == "Windows") {
-              #cpu_thread_number <- cpu_thread_number / 2
+              cpu_thread_number <- cpu_thread_number / 2
               require(doParallel)
               # Register the foreach backend
               cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -1574,12 +1574,12 @@ functions_mass_spectrometry <- function() {
           # Load the required libraries
           require(parallel)
           # Detect the number of cores
-          cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+          cpu_thread_number <- detectCores(logical = TRUE)
           if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-            #cpu_thread_number <- cpu_thread_number / 2
+            cpu_thread_number <- cpu_thread_number / 2
             spectra_binned <- mclapply(spectra, FUN = function (spectra) binning_subfunction(spectra, final_data_points, binning_method), mc.cores = cpu_thread_number)
           } else if (Sys.info()[1] == "Windows") {
-            #cpu_thread_number <- cpu_thread_number - 1
+            cpu_thread_number <- cpu_thread_number - 1
             cl <- makeCluster(cpu_thread_number)
             # Pass the variables to the cluster for running the function
             clusterExport(cl = cl, varlist = c("final_data_points", "binning_method"), envir = environment())
@@ -1592,16 +1592,16 @@ functions_mass_spectrometry <- function() {
           ### PARALLEL BACKEND
           require(parallel)
           # Detect the number of cores
-          cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+          cpu_thread_number <- detectCores(logical = TRUE)
           if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-            #cpu_thread_number <- cpu_thread_number / 2
+            cpu_thread_number <- cpu_thread_number / 2
             #require(doMC)
             require(doParallel)
             # Register the foreach backend
             registerDoParallel(cpu_thread_number)
             #registerDoMC(cores = cpu_thread_number)
           } else if (Sys.info()[1] == "Windows") {
-            #cpu_thread_number <- cpu_thread_number / 2
+            cpu_thread_number <- cpu_thread_number / 2
             require(doParallel)
             # Register the foreach backend
             cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -1665,12 +1665,12 @@ functions_mass_spectrometry <- function() {
       ##### Apply the function
       if ((is.logical(allow_parallelization) && allow_parallelization == TRUE) || (is.character(allow_parallelization) && allow_parallelization == "lapply")) {
         # Detect the number of cores
-        cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+        cpu_thread_number <- detectCores(logical = TRUE)
         if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           spectra <- mclapply(spectra, FUN = function(spectra) backslash_replacing_subfunction(spectra), mc.cores = cpu_thread_number)
         } else if (Sys.info()[1] == "Windows") {
-          #cpu_thread_number <- cpu_thread_number - 1
+          cpu_thread_number <- cpu_thread_number - 1
           # Make the CPU cluster for parallelisation
           cl <- makeCluster(cpu_thread_number)
           # Make the cluster use the custom functions and the package functions along with their parameters
@@ -1687,16 +1687,16 @@ functions_mass_spectrometry <- function() {
         ### PARALLEL BACKEND
         require(parallel)
         # Detect the number of cores
-        cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+        cpu_thread_number <- detectCores(logical = TRUE)
         if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           #require(doMC)
           require(doParallel)
           # Register the foreach backend
           registerDoParallel(cpu_thread_number)
           #registerDoMC(cores = cpu_thread_number)
         } else if (Sys.info()[1] == "Windows") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           require(doParallel)
           # Register the foreach backend
           cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -1863,12 +1863,12 @@ functions_mass_spectrometry <- function() {
       ##### Apply the function
       if ((is.logical(allow_parallelization) && allow_parallelization == TRUE) || (is.character(allow_parallelization) && allow_parallelization == "lapply")) {
         # Detect the number of cores
-        cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+        cpu_thread_number <- detectCores(logical = TRUE)
         if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           spectra <- mclapply(spectra, FUN = function(spectra) name_replacing_subfunction(spectra, spectra_format = spectra_format), mc.cores = cpu_thread_number)
         } else if (Sys.info()[1] == "Windows") {
-          #cpu_thread_number <- cpu_thread_number - 1
+          cpu_thread_number <- cpu_thread_number - 1
           # Make the CPU cluster for parallelisation
           cl <- makeCluster(cpu_thread_number)
           # Make the cluster use the custom functions and the package functions along with their parameters
@@ -1885,16 +1885,16 @@ functions_mass_spectrometry <- function() {
         ### PARALLEL BACKEND
         require(parallel)
         # Detect the number of cores
-        cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+        cpu_thread_number <- detectCores(logical = TRUE)
         if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           #require(doMC)
           require(doParallel)
           # Register the foreach backend
           registerDoParallel(cpu_thread_number)
           #registerDoMC(cores = cpu_thread_number)
         } else if (Sys.info()[1] == "Windows") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           require(doParallel)
           # Register the foreach backend
           cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -2395,12 +2395,12 @@ functions_mass_spectrometry <- function() {
         # Apply the function to the list of spectra_temp
         if ((is.logical(allow_parallelization) && allow_parallelization == TRUE) || (is.character(allow_parallelization) && allow_parallelization == "lapply")) {
           # Detect the number of cores
-          cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+          cpu_thread_number <- detectCores(logical = TRUE)
           if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-            #cpu_thread_number <- cpu_thread_number / 2
+            cpu_thread_number <- cpu_thread_number / 2
             spectra_temp <- mclapply(spectra_temp, FUN = function(spectra_temp) preprocessing_subfunction(spectra_temp, mass_range = mass_range, transformation_algorithm = transformation_algorithm, smoothing_algorithm = smoothing_algorithm, smoothing_half_window_size = smoothing_half_window_size, baseline_subtraction_algorithm = baseline_subtraction_algorithm, baseline_subtraction_algorithm_parameter = baseline_subtraction_algorithm_parameter, normalization_algorithm = normalization_algorithm, normalization_mass_range = normalization_mass_range), mc.cores = cpu_thread_number)
           } else if (Sys.info()[1] == "Windows") {
-            #cpu_thread_number <- cpu_thread_number - 1
+            cpu_thread_number <- cpu_thread_number - 1
             cl <- makeCluster(cpu_thread_number)
             clusterEvalQ(cl, {library(MALDIquant)})
             clusterExport(cl = cl, varlist = c("mass_range", "transformation_algorithm", "smoothing_algorithm", "smoothing_half_window_size", "baseline_subtraction_algorithm", "baseline_subtraction_algorithm_parameter", "normalization_algorithm", "normalization_mass_range", "preprocessing_subfunction", "normalize_spectra"), envir = environment())
@@ -2413,16 +2413,16 @@ functions_mass_spectrometry <- function() {
           ### PARALLEL BACKEND
           require(parallel)
           # Detect the number of cores
-          cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+          cpu_thread_number <- detectCores(logical = TRUE)
           if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-            #cpu_thread_number <- cpu_thread_number / 2
+            cpu_thread_number <- cpu_thread_number / 2
             #require(doMC)
             require(doParallel)
             # Register the foreach backend
             registerDoParallel(cpu_thread_number)
             #registerDoMC(cores = cpu_thread_number)
           } else if (Sys.info()[1] == "Windows") {
-            #cpu_thread_number <- cpu_thread_number / 2
+            cpu_thread_number <- cpu_thread_number / 2
             require(doParallel)
             # Register the foreach backend
             cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -2834,13 +2834,13 @@ functions_mass_spectrometry <- function() {
       # Peak detection
       if (((is.logical(allow_parallelization) && allow_parallelization == TRUE) || (is.character(allow_parallelization) && allow_parallelization == "lapply"))) {
         # Detect the number of cores
-        cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+        cpu_thread_number <- detectCores(logical = TRUE)
         if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           peaks <- detectPeaks(spectra, method = peak_picking_algorithm, halfWindowSize = half_window_size, SNR = SNR, mc.cores = cpu_thread_number)
           names(peaks) <- names(spectra)
         } else if (Sys.info()[1] == "Windows") {
-          #cpu_thread_number <- cpu_thread_number - 1
+          cpu_thread_number <- cpu_thread_number - 1
           # Make the cluster (one for each core/thread)
           cl <- makeCluster(cpu_thread_number)
           clusterEvalQ(cl, {library(MALDIquant)})
@@ -2856,16 +2856,16 @@ functions_mass_spectrometry <- function() {
         ### PARALLEL BACKEND
         require(parallel)
         # Detect the number of cores
-        cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+        cpu_thread_number <- detectCores(logical = TRUE)
         if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           #require(doMC)
           require(doParallel)
           # Register the foreach backend
           registerDoParallel(cpu_thread_number)
           #registerDoMC(cores = cpu_thread_number)
         } else if (Sys.info()[1] == "Windows") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           require(doParallel)
           # Register the foreach backend
           cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -2920,12 +2920,12 @@ functions_mass_spectrometry <- function() {
     if (isMassPeaksList(peaks)) {
       if ((is.logical(allow_parallelization) && allow_parallelization == TRUE) || (is.character(allow_parallelization) && allow_parallelization == "lapply")) {
         # Detect the number of cores
-        cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+        cpu_thread_number <- detectCores(logical = TRUE)
         if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           peaks <- mclapply(peaks, FUN = function(peaks) subselect_peaks_subfunction(peaks, signals_to_take = signals_to_take), mc.cores = cpu_thread_number)
         } else if (Sys.info()[1] == "Windows") {
-          #cpu_thread_number <- cpu_thread_number - 1
+          cpu_thread_number <- cpu_thread_number - 1
           # Make the CPU cluster for parallelisation
           cl <- makeCluster(cpu_thread_number)
           # Pass the variables to the cluster for running the function
@@ -2939,16 +2939,16 @@ functions_mass_spectrometry <- function() {
         ### PARALLEL BACKEND
         require(parallel)
         # Detect the number of cores
-        cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+        cpu_thread_number <- detectCores(logical = TRUE)
         if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           #require(doMC)
           require(doParallel)
           # Register the foreach backend
           registerDoParallel(cpu_thread_number)
           #registerDoMC(cores = cpu_thread_number)
         } else if (Sys.info()[1] == "Windows") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           require(doParallel)
           # Register the foreach backend
           cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -3056,12 +3056,12 @@ functions_mass_spectrometry <- function() {
       ##### Multiple cores
       if ((is.logical(allow_parallelization) && allow_parallelization == TRUE) || (is.character(allow_parallelization) && allow_parallelization == "lapply")) {
         # Detect the number of cores
-        cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+        cpu_thread_number <- detectCores(logical = TRUE)
         if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           peaks_deisotoped <- monoisotopicPeaks(peaks, minCor = pattern_model_correlation, tolerance = isotopic_tolerance, distance = isotope_pattern_distance, size = isotopic_pattern_size, mc.cores = cpu_thread_number)
         } else if (Sys.info()[1] == "Windows") {
-          #cpu_thread_number <- cpu_thread_number - 1
+          cpu_thread_number <- cpu_thread_number - 1
           # Make the CPU cluster for parallelisation
           cl <- makeCluster(cpu_thread_number)
           # Make the cluster use the custom functions and the package functions along with their parameters
@@ -3079,16 +3079,16 @@ functions_mass_spectrometry <- function() {
         ### PARALLEL BACKEND
         require(parallel)
         # Detect the number of cores
-        cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+        cpu_thread_number <- detectCores(logical = TRUE)
         if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           #require(doMC)
           require(doParallel)
           # Register the foreach backend
           registerDoParallel(cpu_thread_number)
           #registerDoMC(cores = cpu_thread_number)
         } else if (Sys.info()[1] == "Windows") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           require(doParallel)
           # Register the foreach backend
           cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -3171,12 +3171,12 @@ functions_mass_spectrometry <- function() {
       ##### Multiple cores
       if ((is.logical(allow_parallelization) && allow_parallelization == TRUE) || (is.character(allow_parallelization) && allow_parallelization == "lapply")) {
         # Detect the number of cores
-        cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+        cpu_thread_number <- detectCores(logical = TRUE)
         if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           peaks_enveloped <- mclapply(peaks, FUN = function(peaks) envelope_peaklist_subfunction(peaks), mc.cores = cpu_thread_number)
         } else if (Sys.info()[1] == "Windows") {
-          #cpu_thread_number <- cpu_thread_number - 1
+          cpu_thread_number <- cpu_thread_number - 1
           # Make the CPU cluster for parallelisation
           cl <- makeCluster(cpu_thread_number)
           # Make the cluster use the custom functions and the package functions along with their parameters
@@ -3194,9 +3194,9 @@ functions_mass_spectrometry <- function() {
         ### PARALLEL BACKEND
         require(parallel)
         # Detect the number of cores
-        cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+        cpu_thread_number <- detectCores(logical = TRUE)
         if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           #require(doMC)
           require(doParallel)
           # Register the foreach backend
@@ -3204,7 +3204,7 @@ functions_mass_spectrometry <- function() {
           # Register the foreach backend
           #registerDoMC(cores = cpu_thread_number)
         } else if (Sys.info()[1] == "Windows") {
-          #cpu_thread_number <- cpu_thread_number / 2
+          cpu_thread_number <- cpu_thread_number / 2
           require(doParallel)
           # Register the foreach backend
           cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -3371,13 +3371,13 @@ functions_mass_spectrometry <- function() {
           if (isMassPeaksList(peaks_aligned)) {
             if ((is.logical(allow_parallelization) && allow_parallelization == TRUE) || (is.character(allow_parallelization) && allow_parallelization == "lapply")) {
               # Detect the number of cores
-              cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+              cpu_thread_number <- detectCores(logical = TRUE)
               if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-                #cpu_thread_number <- cpu_thread_number / 2
+                cpu_thread_number <- cpu_thread_number / 2
                 #peaks_aligned <- mclapply(peaks_aligned, FUN = function(peaks_aligned) align_peaks_subfunction(peaks_aligned, reference_peaklist, tolerance_ppm), mc.cores = cpu_thread_number)
                 peaks_aligned <- mclapply(peaks_aligned, FUN = function(peaks_aligned) warpMassPeaks(peaks_aligned, w = warping_functions), mc.cores = cpu_thread_number)
               } else if (Sys.info()[1] == "Windows") {
-                #cpu_thread_number <- cpu_thread_number - 1
+                cpu_thread_number <- cpu_thread_number - 1
                 # Make the CPU cluster for parallelisation
                 cl <- makeCluster(cpu_thread_number)
                 # Apply the multicore function
@@ -3390,16 +3390,16 @@ functions_mass_spectrometry <- function() {
               ### PARALLEL BACKEND
               require(parallel)
               # Detect the number of cores
-              cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+              cpu_thread_number <- detectCores(logical = TRUE)
               if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-                #cpu_thread_number <- cpu_thread_number / 2
+                cpu_thread_number <- cpu_thread_number / 2
                 #require(doMC)
                 require(doParallel)
                 # Register the foreach backend
                 registerDoParallel(cpu_thread_number)
                 #registerDoMC(cores = cpu_thread_number)
               } else if (Sys.info()[1] == "Windows") {
-                #cpu_thread_number <- cpu_thread_number / 2
+                cpu_thread_number <- cpu_thread_number / 2
                 require(doParallel)
                 # Register the foreach backend
                 cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -3486,8 +3486,8 @@ functions_mass_spectrometry <- function() {
             colnames(final_sample_matrix)[n] <- paste0("X", colnames(final_sample_matrix)[n])
           }
           ##### Predictions (spectra by spectra)
-          predicted_classes <- as.character(predict(model_object, newdata = final_sample_matrix, type = "raw"))
-          predicted_classes_probs <- predict(model_object, newdata = final_sample_matrix, type = "prob")
+          predicted_classes <- as.character(predict(model_object, newdata = final_sample_matrix))#, type = "raw"))
+          predicted_classes_probs <- predict(model_object, newdata = final_sample_matrix)#, type = "prob")
           names(predicted_classes) <- rownames(final_sample_matrix)
           rownames(predicted_classes_probs) <- rownames(final_sample_matrix)
           # Generate a matrix with the results
@@ -3579,8 +3579,8 @@ functions_mass_spectrometry <- function() {
               colnames(sample_bin_matrix)[n] <- paste0("X", colnames(sample_bin_matrix)[n])
             }
             ##### Predictions (AVG spectrum)
-            predicted_class_avg <- as.character(predict(model_object, newdata = sample_bin_matrix, type = "raw"))
-            predicted_class_avg_probs <- predict(model_object, newdata = sample_bin_matrix, type = "prob")
+            predicted_class_avg <- as.character(predict(model_object, newdata = sample_bin_matrix))#, type = "raw"))
+            predicted_class_avg_probs <- predict(model_object, newdata = sample_bin_matrix)#, type = "prob")
             names(predicted_class_avg) <- names(spectra)[s]
             rownames(predicted_class_avg_probs) <- names(spectra)[s]
             # Generate a matrix with the results
@@ -3700,8 +3700,8 @@ functions_mass_spectrometry <- function() {
               colnames(sample_hca_matrix)[x] <- paste0("X", colnames(sample_hca_matrix)[x])
             }
             ##### Predictions (AVG spectrum)
-            predicted_class_avg <- as.character(predict(model_object, newdata = sample_hca_matrix, type = "raw"))
-            predicted_class_avg_probs <- predict(model_object, newdata = sample_hca_matrix, type = "prob")
+            predicted_class_avg <- as.character(predict(model_object, newdata = sample_hca_matrix))#, type = "raw"))
+            predicted_class_avg_probs <- predict(model_object, newdata = sample_hca_matrix)#, type = "prob")
             names(predicted_class_avg) <- rownames(sample_hca_matrix)
             rownames(predicted_class_avg_probs) <- rownames(sample_hca_matrix)
             # Fill the model matrix with the results
@@ -3803,8 +3803,8 @@ functions_mass_spectrometry <- function() {
               colnames(sample_clique_matrix)[x] <- paste0("X", colnames(sample_clique_matrix)[x])
             }
             ##### Predictions (AVG spectrum)
-            predicted_class_avg <- as.character(predict(model_object, newdata = sample_clique_matrix, type = "raw"))
-            predicted_class_avg_probs <- predict(model_object, newdata = sample_clique_matrix, type = "prob")
+            predicted_class_avg <- as.character(predict(model_object, newdata = sample_clique_matrix))#, type = "raw"))
+            predicted_class_avg_probs <- predict(model_object, newdata = sample_clique_matrix)#, type = "prob")
             names(predicted_classes) <- rownames(sample_clique_matrix)
             rownames(predicted_classes_probs) <- rownames(sample_clique_matrix)
             ### Fix the spectra for plotting list (edit the intensity values)
@@ -3829,8 +3829,8 @@ functions_mass_spectrometry <- function() {
               colnames(sample_independent_matrix)[x] <- paste0("X", colnames(sample_independent_matrix)[x])
             }
             ##### Predictions (AVG spectrum)
-            predicted_class_avg <- as.character(predict(model_object, newdata = sample_independent_matrix, type = "raw"))
-            predicted_class_avg_probs <- predict(model_object, newdata = sample_independent_matrix, type = "prob")
+            predicted_class_avg <- as.character(predict(model_object, newdata = sample_independent_matrix))#, type = "raw"))
+            predicted_class_avg_probs <- predict(model_object, newdata = sample_independent_matrix)#, type = "prob")
             names(predicted_classes) <- rownames(sample_independent_matrix)
             rownames(predicted_classes_probs) <- rownames(sample_independent_matrix)
             ### Fix the spectra for plotting list (edit the intensity values)
@@ -3899,7 +3899,7 @@ functions_mass_spectrometry <- function() {
             }
             ##### Predictions (class, no probabilities)
             if (model_ID == "rf" || model_ID == "nbc" || model_ID == "knn" || model_ID == "nnet" || model_ID == "lda" || model_ID == "bayes") {
-              predicted_classes <- as.character(predict(model_object, newdata = sample_clique_matrix, type = "raw"))
+              predicted_classes <- as.character(predict(model_object, newdata = sample_clique_matrix))#, type = "raw"))
               names(predicted_classes) <- rownames(sample_clique_matrix)
             } else {
               predicted_classes <- as.character(predict(model_object, newdata = sample_clique_matrix))
@@ -3982,8 +3982,8 @@ functions_mass_spectrometry <- function() {
           colnames(final_sample_matrix)[n] <- name
         }
         # Predictions
-        predicted_classes <- as.character(predict(model_object, newdata = final_sample_matrix, type = "raw"))
-        predicted_classes_probs <- predict(model_object, newdata = final_sample_matrix, type = "prob")
+        predicted_classes <- as.character(predict(model_object, newdata = final_sample_matrix))#, type = "raw"))
+        predicted_classes_probs <- predict(model_object, newdata = final_sample_matrix)#, type = "prob")
         # Generate a matrix with the results
         result_matrix <- matrix(nrow = 1, ncol = 1)
         rownames(result_matrix) <- spectra@metaData$file[[1]]
@@ -4534,16 +4534,16 @@ functions_mass_spectrometry <- function() {
       ### PARALLEL BACKEND
       require(parallel)
       # Detect the number of cores
-      cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+      cpu_thread_number <- detectCores(logical = TRUE)
       if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         #require(doMC)
         require(doParallel)
         # Register the foreach backend
         registerDoParallel(cpu_thread_number)
         #registerDoMC(cores = cpu_thread_number)
       } else if (Sys.info()[1] == "Windows") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         require(doParallel)
         # Register the foreach backend
         cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -4615,7 +4615,7 @@ functions_mass_spectrometry <- function() {
     if (feature_selection_method == "importance") {
       feature_list <- names(training_set[,!(names(training_set) %in% non_features)])
       # For each feature, calculate the impact on the classification capability
-      model_control <- trainControl(method = "repeatedcv", number = k_fold_cv_control, repeats = cv_repeats_control, classProbs = TRUE)
+      model_control <- trainControl(method = "repeatedcv", number = k_fold_cv_control, repeats = cv_repeats_control)
       # Compute a model based upon the discriminant attribute
       feature_model <- train(x = training_set[,!(names(training_set) %in% non_features)], y = as.factor(training_set[,discriminant_attribute]), method = "pls", preProcess = "scale", trControl = model_control)
       # Estimate variable importance
@@ -4719,16 +4719,16 @@ functions_mass_spectrometry <- function() {
       ### PARALLEL BACKEND
       require(parallel)
       # Detect the number of cores
-      cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+      cpu_thread_number <- detectCores(logical = TRUE)
       if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         #require(doMC)
         require(doParallel)
         # Register the foreach backend
         registerDoParallel(cpu_thread_number)
         #registerDoMC(cores = cpu_thread_number)
       } else if (Sys.info()[1] == "Windows") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         require(doParallel)
         # Register the foreach backend
         cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -4889,16 +4889,16 @@ functions_mass_spectrometry <- function() {
       require(parallel)
       require(foreach)
       # Detect the number of cores
-      cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+      cpu_thread_number <- detectCores(logical = TRUE)
       if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         #require(doMC)
         require(doParallel)
         # Register the foreach backend
         registerDoParallel(cpu_thread_number)
         #registerDoMC(cores = cpu_thread_number)
       } else if (Sys.info()[1] == "Windows") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         require(doParallel)
         # Register the foreach backend
         cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -4929,12 +4929,12 @@ functions_mass_spectrometry <- function() {
     rfe_ctrl <- rfeControl(functions = caretFuncs, method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, saveDetails = TRUE, allowParallel = allow_parallelization, rerank = feature_reranking, seeds = NULL)
     # Two classes
     #if (length(levels(as.factor(training_set[,discriminant_attribute]))) == 2) {
-      #train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL, classProbs = TRUE, summaryFunction = twoClassSummary)
+    #train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL, classProbs = TRUE, summaryFunction = twoClassSummary)
     #} else if (length(levels(as.factor(training_set[,discriminant_attribute]))) > 2) {
-      # Multi-classes
-      #train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL, classProbs = TRUE, summaryFunction = multiClassSummary)
+    # Multi-classes
+    #train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL, classProbs = TRUE, summaryFunction = multiClassSummary)
     #}
-    train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL, classProbs = TRUE)
+    train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL)#, classProbs = TRUE)
     ### Model tuning is performed during feature selection (best choice)
     if (!is.null(model_tuning) && model_tuning == "embedded" && is.list(model_tune_grid)) {
       # Run the RFE
@@ -4946,17 +4946,17 @@ functions_mass_spectrometry <- function() {
     }
     ### Model performances: two classes (ROC)
     #if (length(levels(as.factor(training_set[,discriminant_attribute]))) == 2) {
-      #fs_model_performance <- as.numeric(max(rfe_model$fit$results$ROC, na.rm = TRUE))
-      #names(fs_model_performance) <- "ROC AUC"
+    #fs_model_performance <- as.numeric(max(rfe_model$fit$results$ROC, na.rm = TRUE))
+    #names(fs_model_performance) <- "ROC AUC"
     #} else if (length(levels(as.factor(training_set[,discriminant_attribute]))) > 2) {
-      ### Model performances: multi-classes (Accuracy or Kappa)
-      if (selection_metric == "kappa" || selection_metric == "Kappa") {
-        fs_model_performance <- as.numeric(max(rfe_model$fit$results$Kappa, na.rm = TRUE))
-        names(fs_model_performance) <- "Kappa"
-      } else if (selection_metric == "accuracy" || selection_metric == "Accuracy") {
-        fs_model_performance <- as.numeric(max(rfe_model$fit$results$Accuracy, na.rm = TRUE))
-        names(fs_model_performance) <- "Accuracy"
-      }
+    ### Model performances: multi-classes (Accuracy or Kappa)
+    if (selection_metric == "kappa" || selection_metric == "Kappa") {
+      fs_model_performance <- as.numeric(max(rfe_model$fit$results$Kappa, na.rm = TRUE))
+      names(fs_model_performance) <- "Kappa"
+    } else if (selection_metric == "accuracy" || selection_metric == "Accuracy") {
+      fs_model_performance <- as.numeric(max(rfe_model$fit$results$Accuracy, na.rm = TRUE))
+      names(fs_model_performance) <- "Accuracy"
+    }
     #}
     # Extract the model
     fs_model <- rfe_model$fit
@@ -5012,11 +5012,11 @@ functions_mass_spectrometry <- function() {
       }
       # Define the control function
       #if (length(levels(as.factor(training_set[,discriminant_attribute]))) == 2) {
-        #train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL, classProbs = TRUE, summaryFunction = twoClassSummary)
+      #train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL, classProbs = TRUE, summaryFunction = twoClassSummary)
       #} else if (length(levels(as.factor(training_set[,discriminant_attribute]))) > 2) {
-        #train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL, classProbs = TRUE, summaryFunction = multiClassSummary)
+      #train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL, classProbs = TRUE, summaryFunction = multiClassSummary)
       #}
-      train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL, classProbs = TRUE)
+      train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL)#, classProbs = TRUE)
       # Define the model tuned
       fs_model_tuning <- train(x = training_set_feature_selection[, !(names(training_set_feature_selection) %in% non_features)], y = as.factor(training_set_feature_selection[, discriminant_attribute]), method = selection_method, preProcess = preprocessing, tuneGrid = expand.grid(model_tune_grid), trControl = train_ctrl, metric = selection_metric)
       # Plots
@@ -5030,17 +5030,17 @@ functions_mass_spectrometry <- function() {
       }
       ### Model performances: two classes (ROC)
       #if (length(levels(as.factor(training_set[,discriminant_attribute]))) == 2) {
-        #fs_model_performance_tuning <- as.numeric(max(fs_model_tuning$results$ROC, na.rm = TRUE))
-        #names(fs_model_performance_tuning) <- "ROC AUC"
+      #fs_model_performance_tuning <- as.numeric(max(fs_model_tuning$results$ROC, na.rm = TRUE))
+      #names(fs_model_performance_tuning) <- "ROC AUC"
       #} else if (length(levels(as.factor(training_set[,discriminant_attribute]))) > 2) {
-        ### Model performances: multi-classes (Accuracy or Kappa)
-        if (selection_metric == "kappa" || selection_metric == "Kappa") {
-          fs_model_performance_tuning <- as.numeric(max(fs_model_tuning$results$Kappa, na.rm = TRUE))
-          names(fs_model_performance_tuning) <- "Kappa"
-        } else if (selection_metric == "accuracy" || selection_metric == "Accuracy") {
-          fs_model_performance_tuning <- as.numeric(max(fs_model_tuning$results$Accuracy, na.rm = TRUE))
-          names(fs_model_performance_tuning) <- "Accuracy"
-        }
+      ### Model performances: multi-classes (Accuracy or Kappa)
+      if (selection_metric == "kappa" || selection_metric == "Kappa") {
+        fs_model_performance_tuning <- as.numeric(max(fs_model_tuning$results$Kappa, na.rm = TRUE))
+        names(fs_model_performance_tuning) <- "Kappa"
+      } else if (selection_metric == "accuracy" || selection_metric == "Accuracy") {
+        fs_model_performance_tuning <- as.numeric(max(fs_model_tuning$results$Accuracy, na.rm = TRUE))
+        names(fs_model_performance_tuning) <- "Accuracy"
+      }
       #}
       ## Keep the model and the performance values only if the tuning yields more performances that just after the RFE
       if (as.numeric(fs_model_performance_tuning) > as.numeric(fs_model_performance)) {
@@ -5064,7 +5064,7 @@ functions_mass_spectrometry <- function() {
       }
       # Class prediction (with the same features!)
       test_set <- test_set[, names(training_set_feature_selection)]
-      predicted_classes_model <- predict(fs_model, newdata = test_set[,!(names(test_set) %in% non_features)], type = "raw")
+      predicted_classes_model <- predict(fs_model, newdata = test_set[,!(names(test_set) %in% non_features)])#, type = "raw")
       # Determine the performance parameters
       model_external_performance_parameters <- extract_model_performance_parameters(training_set = training_set_feature_selection, model_object = fs_model, discriminant_attribute = discriminant_attribute, non_features = non_features, type_of_analysis = "external validation", test_set = test_set)
       model_external_performance_parameter_list <- model_external_performance_parameters$performance_parameter_list
@@ -5527,7 +5527,7 @@ functions_mass_spectrometry <- function() {
       bayesian_probabilities <- list()
       ### The training and the test sets must have the same exact features
       test_set <- test_set[, names(training_set)]
-      predicted_classes_model <- as.character(predict(model_object, newdata = test_set[,!(names(test_set) %in% non_features)], type = "raw"))
+      predicted_classes_model <- as.character(predict(model_object, newdata = test_set[,!(names(test_set) %in% non_features)]))#, type = "raw"))
       ### Determine the performance parameter values for each class (at each iteration, one class will be considered as the positive class for the confusion matrix)
       for (cl in 1:length(class_list)) {
         # One is the positive class
@@ -5615,16 +5615,16 @@ functions_mass_spectrometry <- function() {
       ### PARALLEL BACKEND
       require(parallel)
       # Detect the number of cores
-      cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+      cpu_thread_number <- detectCores(logical = TRUE)
       if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         #require(doMC)
         require(doParallel)
         # Register the foreach backend
         registerDoParallel(cpu_thread_number)
         #registerDoMC(cores = cpu_thread_number)
       } else if (Sys.info()[1] == "Windows") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         require(doParallel)
         # Register the foreach backend
         cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -5638,7 +5638,7 @@ functions_mass_spectrometry <- function() {
       set.seed(seed)
     }
     ### Define the control function
-    train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL, classProbs = TRUE)
+    train_ctrl <- trainControl(method = "repeatedcv", repeats = cv_repeats_control, number = k_fold_cv_control, allowParallel = allow_parallelization, seeds = NULL)
     ### Define the model tuned
     if (!is.null(model_tune_grid) || (is.list(model_tune_grid) && length(model_tune_grid) > 0)) {
       fs_model <- train(x = training_set_feature_selection[, !(names(training_set_feature_selection) %in% non_features)], y = as.factor(training_set_feature_selection[, discriminant_attribute]), method = selection_method, preProcess = preprocessing, tuneGrid = expand.grid(model_tune_grid), trControl = train_ctrl, metric = selection_metric)
@@ -6482,12 +6482,12 @@ functions_mass_spectrometry <- function() {
     ##### Run the function for each element of the reference_sample_list (= each sample) (each sample gets compared with the database)
     if ((is.logical(allow_parallelization) && allow_parallelization == TRUE) || (is.character(allow_parallelization) && allow_parallelization == "lapply")) {
       # Detect the number of cores
-      cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+      cpu_thread_number <- detectCores(logical = TRUE)
       if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         output_list <- mclapply(reference_sample_list, FUN = function(reference_sample_list) comparison_sample_db_subfunction_correlation(reference_sample_list, modality = correlation_mode), mc.cores = cpu_thread_number)
       } else if (Sys.info()[1] == "Windows") {
-        #cpu_thread_number <- cpu_thread_number - 1
+        cpu_thread_number <- cpu_thread_number - 1
         # Make the CPU cluster for parallelisation
         cls <- makeCluster(cpu_thread_number)
         # Make the cluster use the custom functions and the package functions along with their parameters
@@ -6503,16 +6503,16 @@ functions_mass_spectrometry <- function() {
       ### PARALLEL BACKEND
       require(parallel)
       # Detect the number of cores
-      cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+      cpu_thread_number <- detectCores(logical = TRUE)
       if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         #require(doMC)
         require(doParallel)
         # Register the foreach backend
         registerDoParallel(cpu_thread_number)
         #registerDoMC(cores = cpu_thread_number)
       } else if (Sys.info()[1] == "Windows") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         require(doParallel)
         # Register the foreach backend
         cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -6999,12 +6999,12 @@ functions_mass_spectrometry <- function() {
     ##### Run the function for each element of the reference_sample_list (= each sample) (each sample gets compared with the database)
     if ((is.logical(allow_parallelization) && allow_parallelization == TRUE) || (is.character(allow_parallelization) && allow_parallelization == "lapply")) {
       # Detect the number of cores
-      cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+      cpu_thread_number <- detectCores(logical = TRUE)
       if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         output_list <- mclapply(reference_sample_list, FUN = function(reference_sample_list) comparison_sample_db_subfunction_intensity(reference_sample_list), mc.cores = cpu_thread_number)
       } else if (Sys.info()[1] == "Windows") {
-        #cpu_thread_number <- cpu_thread_number - 1
+        cpu_thread_number <- cpu_thread_number - 1
         # Make the CPU cluster for parallelisation
         cls <- makeCluster(cpu_thread_number)
         # Make the cluster use the custom functions and the package functions along with their parameters
@@ -7018,16 +7018,16 @@ functions_mass_spectrometry <- function() {
       ### PARALLEL BACKEND
       require(parallel)
       # Detect the number of cores
-      cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+      cpu_thread_number <- detectCores(logical = TRUE)
       if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         #require(doMC)
         require(doParallel)
         # Register the foreach backend
         registerDoParallel(cpu_thread_number)
         #registerDoMC(cores = cpu_thread_number)
       } else if (Sys.info()[1] == "Windows") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         require(doParallel)
         # Register the foreach backend
         cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -7346,12 +7346,12 @@ functions_mass_spectrometry <- function() {
     ##### Run the function for each element of the reference_sample_list (= each sample) (each sample gets compared with the database)
     if ((is.logical(allow_parallelization) && allow_parallelization == TRUE) || (is.character(allow_parallelization) && allow_parallelization == "lapply")) {
       # Detect the number of cores
-      cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+      cpu_thread_number <- detectCores(logical = TRUE)
       if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         output_list <- mclapply(reference_sample_list, FUN = function(reference_sample_list) comparison_sample_db_subfunction_similarity_index(reference_sample_list), mc.cores = cpu_thread_number)
       } else if (Sys.info()[1] == "Windows") {
-        #cpu_thread_number <- cpu_thread_number - 1
+        cpu_thread_number <- cpu_thread_number - 1
         # Make the CPU cluster for parallelisation
         cls <- makeCluster(cpu_thread_number)
         # Make the cluster use the custom functions and the package functions along with their parameters
@@ -7364,16 +7364,16 @@ functions_mass_spectrometry <- function() {
       ### PARALLEL BACKEND
       require(parallel)
       # Detect the number of cores
-      cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+      cpu_thread_number <- detectCores(logical = TRUE)
       if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         #require(doMC)
         require(doParallel)
         # Register the foreach backend
         registerDoParallel(cpu_thread_number)
         #registerDoMC(cores = cpu_thread_number)
       } else if (Sys.info()[1] == "Windows") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         require(doParallel)
         # Register the foreach backend
         cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -7713,12 +7713,12 @@ functions_mass_spectrometry <- function() {
         if (isMassPeaksList(peaks)) {
           if ((is.logical(allow_parallelization) && allow_parallelization == TRUE) || (is.character(allow_parallelization) && allow_parallelization == "lapply")) {
             # Detect the number of cores
-            cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+            cpu_thread_number <- detectCores(logical = TRUE)
             if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-              #cpu_thread_number <- cpu_thread_number / 2
+              cpu_thread_number <- cpu_thread_number / 2
               peaks <- mclapply(peaks, FUN = function(peaks) peak_alignment_subfunction(peaks = peaks, reference_masses = custom_feature_vector, tolerance_ppm = tolerance_ppm), mc.cores = cpu_thread_number)
             } else if (Sys.info()[1] == "Windows") {
-              #cpu_thread_number <- cpu_thread_number - 1
+              cpu_thread_number <- cpu_thread_number - 1
               # Make the CPU cluster for parallelisation
               cl <- makeCluster(cpu_thread_number)
               # Make the cluster use the custom functions and the package functions along with their parameters
@@ -7735,16 +7735,16 @@ functions_mass_spectrometry <- function() {
             ### PARALLEL BACKEND
             require(parallel)
             # Detect the number of cores
-            cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+            cpu_thread_number <- detectCores(logical = TRUE)
             if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-              #cpu_thread_number <- cpu_thread_number / 2
+              cpu_thread_number <- cpu_thread_number / 2
               #require(doMC)
               require(doParallel)
               # Register the foreach backend
               registerDoParallel(cpu_thread_number)
               #registerDoMC(cores = cpu_thread_number)
             } else if (Sys.info()[1] == "Windows") {
-              #cpu_thread_number <- cpu_thread_number / 2
+              cpu_thread_number <- cpu_thread_number / 2
               require(doParallel)
               # Register the foreach backend
               cl <- makeCluster(cpu_thread_number, type='PSOCK')
@@ -8358,16 +8358,16 @@ functions_mass_spectrometry <- function() {
       ### PARALLEL BACKEND
       require(parallel)
       # Detect the number of cores
-      cpu_thread_number <- detectCores(all.tests = TRUE, logical = FALSE)
+      cpu_thread_number <- detectCores(logical = TRUE)
       if (Sys.info()[1] == "Linux" || Sys.info()[1] == "Darwin") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         #require(doMC)
         require(doParallel)
         # Register the foreach backend
         registerDoParallel(cpu_thread_number)
         #registerDoMC(cores = cpu_thread_number)
       } else if (Sys.info()[1] == "Windows") {
-        #cpu_thread_number <- cpu_thread_number / 2
+        cpu_thread_number <- cpu_thread_number / 2
         require(doParallel)
         # Register the foreach backend
         cls <- makeCluster(cpu_thread_number)
@@ -8724,7 +8724,8 @@ functions_mass_spectrometry <- function() {
   
   
   ################################################################################
-}
+  }
+
 
 
 
@@ -8853,7 +8854,7 @@ ensemble_ms_tuner <- function() {
   # In the debugging phase, run the whole code block within the {}, like as if the script was directly sourced from the file.
   
   ### Program version (Specified by the program writer!!!!)
-  R_script_version <- "2017.11.09.0"
+  R_script_version <- "2017.11.10.0"
   ### Force update (in case something goes wrong after an update, when checking for updates and reading the variable force_update, the script can automatically download the latest working version, even if the rest of the script is corrupted, because it is the first thing that reads)
   force_update <- FALSE
   ### GitHub URL where the R file is
